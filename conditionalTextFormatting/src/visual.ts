@@ -66,10 +66,15 @@ module powerbi.extensibility.visual {
                 throw new Error("Invalid values");
             }
             for (let key in settings) {
-                state = settings[key];
-                if (isActive(state, stateValue)) {
-                    break;
+                if (isActive(settings[key], stateValue)) {
+                    state = settings[key];
                 }
+            }
+            if (!state) {
+                return {
+                    color: 'inherit',
+                    measure: stateValue
+                };
             }
             return {
                 color: state.color,
