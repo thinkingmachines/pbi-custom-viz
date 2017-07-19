@@ -1,0 +1,38 @@
+{
+    "dataRoles": [
+        {
+            "displayName": "Card Number",
+            "name": "cardNumber",
+            "kind": "Measure"
+        }
+    ],
+    "dataViewMappings": [
+        {
+            "conditions": [
+                {
+                    "cardNumber": {
+                        "max": 1
+                    }
+                }
+            ],
+            "single": {
+                "role": "cardNumber"
+            }
+        }
+    ],
+    "objects": {
+        "cardNumber": {
+            "displayName": "Card Number",
+            "properties": {
+                 "fontSize": {
+                    "displayName": "Font size",
+                    "type": {
+                        "formatting": {
+                            "fontSize": true
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
