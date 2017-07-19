@@ -1,0 +1,168 @@
+{
+    "dataRoles": [
+        {
+            "displayName": "Measure Data",
+            "name": "measure",
+            "kind": "Measure"
+        },
+        {
+            "displayName": "State Data",
+            "name": "state",
+            "kind": "Measure"
+        }
+    ],
+    "dataViewMappings": [
+        {
+            "categorical": {
+                "values": {
+                    "select": [
+                        { "bind": { "to": "measure" } },
+                        { "bind": { "to": "state" } }
+                    ]
+                }
+            }
+        }
+    ],
+    "objects": {
+        "state1": {
+            "displayName": "State 1",
+            "properties": {
+                "enabled": {
+                    "displayName": "Enabled",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "condition": {
+                    "displayName": "Condition",
+                    "type": {
+                        "enumeration": [
+                            { "displayName": "Greater than", "value": "gt" },
+                            { "displayName": "Less than", "value": "lt" },
+                            { "displayName": "Equal", "value": "eq" }
+                        ]
+                    }
+                },
+                "value": {
+                    "displayName": "Value",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "color": {
+                    "displayName": "Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "state2": {
+            "displayName": "State 2",
+            "properties": {
+                "enabled": {
+                    "displayName": "Enabled",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "condition": {
+                    "displayName": "Condition",
+                    "type": {
+                        "enumeration": [
+                            { "displayName": "Greater than", "value": "gt" },
+                            { "displayName": "Less than", "value": "lt" },
+                            { "displayName": "Equal", "value": "eq" }
+                        ]
+                    }
+                },
+                "value": {
+                    "displayName": "Value",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "color": {
+                    "displayName": "Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "state3": {
+            "displayName": "State 3",
+            "properties": {
+                "enabled": {
+                    "displayName": "Enabled",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "condition": {
+                    "displayName": "Condition",
+                    "type": {
+                        "enumeration": [
+                            { "displayName": "Greater than", "value": "gt" },
+                            { "displayName": "Less than", "value": "lt" },
+                            { "displayName": "Equal", "value": "eq" }
+                        ]
+                    }
+                },
+                "value": {
+                    "displayName": "Value",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "color": {
+                    "displayName": "Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "text": {
+            "displayName": "Text",
+            "properties": {
+                "fontSize": {
+                    "displayName": "Font size",
+                    "type": {
+                        "formatting": {
+                            "fontSize": true
+                        }
+                    }
+                },
+                "fontFamily": {
+                    "displayName": "Font family",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "textAlign": {
+                    "displayName": "Text alignment",
+                    "type": {
+                        "enumeration": [
+                            { "displayName": "Left", "value": "left" },
+                            { "displayName": "Right", "value": "right" },
+                            { "displayName": "Center", "value": "center" }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}
