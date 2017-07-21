@@ -33,7 +33,6 @@ module powerbi.extensibility.visual {
     }
 
     export class cardNumberSettings {
-        // Font size
         public fontSize: number = 24;
     }
 

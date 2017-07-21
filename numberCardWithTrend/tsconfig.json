@@ -15,6 +15,7 @@
     "node_modules/powerbi-visuals-utils-svgutils/lib/index.d.ts",
     "node_modules/powerbi-visuals-utils-dataviewutils/lib/index.d.ts",
     "node_modules/powerbi-visuals-utils-formattingutils/lib/index.d.ts",
+    "src/humanize.ts",
     "src/settings.ts",
     "src/visual.ts"
   ]

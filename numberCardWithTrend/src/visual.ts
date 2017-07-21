@@ -30,7 +30,6 @@ module powerbi.extensibility.visual {
     import Selection = d3.Selection;
 
     import pixelConverterFromPoint = powerbi.extensibility.utils.type.PixelConverter.fromPoint;
-    import valueFormatter = powerbi.extensibility.utils.formatting.valueFormatter;
 
     interface ViewModel {
         cardNumber: CardNumber;
@@ -41,19 +40,14 @@ module powerbi.extensibility.visual {
     };
 
     function visualTransform(options: VisualUpdateOptions, host: IVisualHost): ViewModel {
-        let dataViews = options.dataViews;
+        let dataView = options && options.dataViews && options.dataViews[0];
+        let values = dataView.categorical.values[0].values;
+        let cardNumber = values[values.length - 1];
         return {
             cardNumber: {
-                value: dataViews[0].single.value
+                value: cardNumber
             }
         };
-    }
-
-    function formatValue(value: any) {
-        let formatter = valueFormatter.create({
-            value: 1e11
-        });
-        return formatter.format(value);
     }
 
     export class Visual implements IVisual {
@@ -68,16 +62,16 @@ module powerbi.extensibility.visual {
         }
 
         public update(options: VisualUpdateOptions) {
-            this.target.html(null);
-            let settings = Visual.parseSettings(options && options.dataViews && options.dataViews[0]);
-            let viewModel: ViewModel = visualTransform(options, this.host);
-            let cardNumber = this.target.append('div')
-                .classed('card-number', true)
-                .style('font-size', pixelConverterFromPoint(settings.cardNumber.fontSize))
-                .datum(viewModel.cardNumber);
             try {
+                this.target.html(null);
+                let settings = Visual.parseSettings(options && options.dataViews && options.dataViews[0]);
+                let viewModel: ViewModel = visualTransform(options, this.host);
+                let cardNumber = this.target.append('div')
+                    .classed('card-number', true)
+                    .style('font-size', pixelConverterFromPoint(settings.cardNumber.fontSize))
+                    .datum(viewModel.cardNumber);
                 cardNumber.text(function (d) {
-                    return formatValue(d.value);
+                    return compactInteger(d.value);
                 });
             } catch (e) {
                 console.error(e);

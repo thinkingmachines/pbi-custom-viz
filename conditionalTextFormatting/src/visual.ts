@@ -47,7 +47,6 @@ module powerbi.extensibility.visual {
                     return stateValue < state.value;
                 case 'eq':
                     return stateValue === state.value;
-
             }
         }
         return false;

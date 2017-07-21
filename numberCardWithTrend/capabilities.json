@@ -1,22 +1,36 @@
 {
     "dataRoles": [
         {
-            "displayName": "Card Number",
-            "name": "cardNumber",
+            "displayName": "Measure",
+            "name": "measure",
             "kind": "Measure"
+        },
+        {
+            "displayName": "Trend Axis",
+            "name": "axis",
+            "kind": "GroupingOrMeasure"
         }
     ],
     "dataViewMappings": [
         {
             "conditions": [
                 {
-                    "cardNumber": {
+                    "measure": {
                         "max": 1
                     }
                 }
             ],
-            "single": {
-                "role": "cardNumber"
+            "categorical": {
+                "categories": {
+                    "for": {
+                        "in": "axis"
+                    }
+                },
+                "values": {
+                    "select": [
+                        { "bind": { "to": "measure" } }
+                    ]
+                }
             }
         }
     ],
@@ -31,7 +45,7 @@
                             "fontSize": true
                         }
                     }
-                }
+                 }
             }
         }
     }
