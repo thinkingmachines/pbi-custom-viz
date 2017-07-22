@@ -1,12 +1,30 @@
 @import (less) "node_modules/powerbi-visuals-utils-formattingutils/lib/index.css";
 
-.card-number {
-    font-weight: bold;
+.card-title {
+    & {
+        height: 80px;
+    }
+    .measure {
+        font-weight: bold;
+    }
+    .change {
+        color: #b4b4b4;
+        position: absolute;
+        right: 0;
+        top: 0;
+        text-align: center;
+    }
+    .change-value {
+        color: green;
+        font-size: 40px;
+    }
+    .change-label {
+        font-size: 14px;
+    }
 }
 
 .chart {
     path {
-        stroke: blue;
         stroke-width: 3;
         fill: none;
     }
@@ -18,8 +36,10 @@
             line {
                 stroke: #b4b4b4;
                 stroke-width: 1;
+                opacity: 0.5;
             }
             text {
+                font-size: 14px;
                 fill: #b4b4b4;
             }
         }

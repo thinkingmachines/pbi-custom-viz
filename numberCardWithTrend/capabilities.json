@@ -9,6 +9,16 @@
             "displayName": "Trend Axis",
             "name": "axis",
             "kind": "GroupingOrMeasure"
+        },
+        {
+            "displayName": "Compare Against",
+            "name": "compareValue",
+            "kind": "Measure"
+        },
+        {
+            "displayName": "Compare Measure",
+            "name": "stateValue",
+            "kind": "Measure"
         }
     ],
     "dataViewMappings": [
@@ -35,8 +45,8 @@
         }
     ],
     "objects": {
-        "cardNumber": {
-            "displayName": "Card Number",
+        "measure": {
+            "displayName": "Measure",
             "properties": {
                  "fontSize": {
                     "displayName": "Font size",
@@ -46,6 +56,30 @@
                         }
                     }
                  }
+            }
+        },
+        "chart": {
+            "displayName": "Chart",
+            "properties": {
+                "type": {
+                    "displayName": "Chart type",
+                    "type": {
+                        "enumeration": [
+                            { "displayName": "Bar", "value": "bar" },
+                            { "displayName": "Line", "value": "line" }
+                        ]
+                    }
+                },
+                "color": {
+                    "displayName": "Chart color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                }
             }
         }
     }

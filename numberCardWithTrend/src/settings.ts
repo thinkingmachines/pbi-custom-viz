@@ -29,11 +29,17 @@ module powerbi.extensibility.visual {
     import DataViewObjectsParser = powerbi.extensibility.utils.dataview.DataViewObjectsParser;
 
     export class VisualSettings extends DataViewObjectsParser {
-        public cardNumber: cardNumberSettings = new cardNumberSettings();
+        public measure: MeasureSettings = new MeasureSettings();
+        public chart: ChartSettings = new ChartSettings();
     }
 
-    export class cardNumberSettings {
+    export class MeasureSettings {
         public fontSize: number = 24;
+    }
+
+    export class ChartSettings {
+        public type: string = 'line';
+        public color: string = 'black';
     }
 
 }

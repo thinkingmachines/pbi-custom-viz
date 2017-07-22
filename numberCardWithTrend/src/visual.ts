@@ -32,21 +32,15 @@ module powerbi.extensibility.visual {
     import pixelConverterFromPoint = powerbi.extensibility.utils.type.PixelConverter.fromPoint;
 
     interface ViewModel {
-        cardNumber: CardNumber;
-    };
-
-    interface CardNumber {
-        value: any;
+        measure: any;
     };
 
     function visualTransform(options: VisualUpdateOptions, host: IVisualHost): ViewModel {
         let dataView = options && options.dataViews && options.dataViews[0];
         let values = dataView.categorical.values[0].values;
-        let cardNumber = values[values.length - 1];
+        let measure = values[values.length - 1];
         return {
-            cardNumber: {
-                value: cardNumber
-            }
+            measure: measure
         };
     }
 
@@ -55,23 +49,37 @@ module powerbi.extensibility.visual {
         private host: IVisualHost;
         private settings: VisualSettings;
         private cardTitle: Selection<HTMLElement>;
-        private cardNumber: Selection<HTMLElement>;
+        private measure: Selection<HTMLElement>;
+        private change: Selection<HTMLElement>;
+        private changeValue: Selection<HTMLElement>;
+        private changeLabel: Selection<HTMLElement>;
         private svg: Selection<HTMLElement>;
         private chart: Selection<HTMLElement>;
         private xAxis: Selection<HTMLElement>;
         private yAxis: Selection<HTMLElement>;
+        private bars: Selection<HTMLElement>;
         private line: Selection<HTMLElement>;
 
         constructor(options: VisualConstructorOptions) {
             this.target = d3.select(options.element).append('div');
-            this.cardTitle = this.target.append('div').attr('class', 'card-title');
-            this.cardNumber = this.cardTitle.append('div').attr('class', 'card-number');
+            this.cardTitle = this.target.append('div')
+                .attr('class', 'card-title');
+            this.measure = this.cardTitle.append('div')
+                .attr('class', 'measure');
+            this.change = this.cardTitle.append('div')
+                .attr('class', 'change');
+            this.changeValue = this.change.append('div')
+                .attr('class', 'change-value');
+            this.changeLabel = this.change.append('div')
+                .attr('class', 'change-label');
             this.svg = this.target.append('svg');
             this.chart = this.svg.append('g').attr('class', 'chart');
             this.xAxis = this.chart.append('g')
                 .attr('class', 'x axis');
             this.yAxis = this.chart.append('g')
                 .attr('class', 'y axis')
+                .attr('transform', 'translate(60, 30)');
+            this.bars = this.chart.append('g')
                 .attr('transform', 'translate(60, 30)');
             this.line = this.chart.append('path')
                 .attr('transform', 'translate(60, 30)');
@@ -81,32 +89,35 @@ module powerbi.extensibility.visual {
         public update(options: VisualUpdateOptions) {
             try {
                 let dataView = options && options.dataViews && options.dataViews[0];
-                let settings = Visual.parseSettings(dataView);
+                this.settings = Visual.parseSettings(dataView);
                 let viewModel: ViewModel = visualTransform(options, this.host);
 
-                this.cardTitle.style('height', (options.viewport.height / 4) + 'px');
-
-                let cardNumber = this.cardNumber
-                    .style('font-size', pixelConverterFromPoint(settings.cardNumber.fontSize))
-                    .datum(viewModel.cardNumber);
-                cardNumber.text(function (d) {
-                    return compactInteger(d.value);
-                });
+                this.measure
+                    .style('font-size', pixelConverterFromPoint(this.settings.measure.fontSize))
+                    .datum(viewModel.measure)
+                    .text(function (d) {
+                        return compactInteger(d).toLowerCase();
+                    });
+                this.changeValue.text('7.19%');
+                this.changeLabel.text('change from last year');
 
                 let width = options.viewport.width - 60;
-                let height = options.viewport.height * 3 / 4 - 30 - 30;
+                let height = options.viewport.height - 80 - 30 - 30;
                 this.svg.attr('width', width + 60);
                 this.svg.attr('height', height + 30 + 30);
 
-                let x = d3.time.scale().range([0, width]);
+                let xo = d3.scale.ordinal().rangeBands([0, width], 0.05);
+                let xt = d3.time.scale().range([0, width]);
                 let y = d3.scale.linear().range([height, 0]);
-                let xAxis = d3.svg.axis().scale(x).orient('bottom').ticks(5);
+                let xAxis = d3.svg.axis().orient('bottom')
+                    .scale(xt)
+                    .tickFormat(d3.time.format('%b %Y'))
+                    .ticks(2);
                 let yAxis = d3.svg.axis().scale(y).orient('left').ticks(5)
                     .tickSize(-width)
-                    .tickFormat(function (d) { return compactInteger(d); });
-                var line = d3.svg.line()
-                    .x(function (d: any) { return x(d.date); })
-                    .y(function (d: any) { return y(d.value); });
+                    .tickFormat(function (d) {
+                        return compactInteger(d).toLowerCase();
+                    });
 
                 let dates = dataView.categorical.categories[0].values;
                 let values = dataView.categorical.values[0].values;
@@ -116,13 +127,32 @@ module powerbi.extensibility.visual {
                         value: values[i]
                     };
                 });
-                x.domain(d3.extent(data, function (d: any) { return d.date; }));
+
+                xo.domain(data.map(function (d: any) { return d.date; }));
+                xt.domain(d3.extent(data, function (d: any) { return d.date; }));
                 y.domain(d3.extent(data, function (d: any) { return d.value; }));
 
                 this.xAxis.attr('transform', 'translate(60, ' + (height + 30) + ')')
                     .call(xAxis);
                 this.yAxis.call(yAxis);
-                this.line.datum(data).attr('d', <any>line);
+
+                if (this.settings.chart.type === 'bar') {
+                    this.line.attr('d', null);
+                    this.bars.selectAll('.bar').data(data).enter()
+                        .append('rect')
+                        .style('fill', this.settings.chart.color)
+                        .attr('x', function (d: any) { return xo(d.date); })
+                        .attr('y', function (d: any) { return y(d.value); })
+                        .attr('width', xo.rangeBand())
+                        .attr('height', function (d: any) { return height - y(d.value); });
+                } else {
+                    this.bars.html(null);
+                    let line = d3.svg.line()
+                        .x(function (d: any) { return xt(d.date); })
+                        .y(function (d: any) { return y(d.value); });
+                    this.line.datum(data).attr('d', <any>line)
+                        .style('stroke', this.settings.chart.color);
+                }
 
 						} catch (e) {
                 console.error(e);
