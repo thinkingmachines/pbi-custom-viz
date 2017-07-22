@@ -40,6 +40,7 @@ module powerbi.extensibility.visual {
     export class ChartSettings {
         public type: string = 'line';
         public color: string = 'black';
+        public trendColor: string = 'black';
     }
 
 }

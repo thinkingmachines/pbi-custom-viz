@@ -59,6 +59,7 @@ module powerbi.extensibility.visual {
         private yAxis: Selection<HTMLElement>;
         private bars: Selection<HTMLElement>;
         private line: Selection<HTMLElement>;
+        private trendLine: Selection<HTMLElement>;
 
         constructor(options: VisualConstructorOptions) {
             this.target = d3.select(options.element).append('div');
@@ -82,6 +83,9 @@ module powerbi.extensibility.visual {
             this.bars = this.chart.append('g')
                 .attr('transform', 'translate(60, 30)');
             this.line = this.chart.append('path')
+                .attr('transform', 'translate(60, 30)');
+            this.trendLine = this.chart.append('path')
+                .style('stroke-dasharray', '3, 3')
                 .attr('transform', 'translate(60, 30)');
             this.host = options.host;
         }
@@ -120,11 +124,17 @@ module powerbi.extensibility.visual {
                     });
 
                 let dates = dataView.categorical.categories[0].values;
+                // FIXME: Use category.source.roles!
                 let values = dataView.categorical.values[0].values;
+                let trend = [];
+                if (dataView.categorical.values.length > 1) {
+                    trend = dataView.categorical.values[1].values;
+                }
                 let data = dates.map(function (d, i) {
                     return {
                         date: d,
-                        value: values[i]
+                        value: values[i],
+                        trend: trend.length > 0 && trend[i] || null,
                     };
                 });
 
@@ -152,6 +162,15 @@ module powerbi.extensibility.visual {
                         .y(function (d: any) { return y(d.value); });
                     this.line.datum(data).attr('d', <any>line)
                         .style('stroke', this.settings.chart.color);
+                }
+
+                this.trendLine.attr('d', null);
+                if (trend.length) {
+                    let trendLine = d3.svg.line()
+                        .x(function (d: any) { return xt(d.date); })
+                        .y(function (d: any) { return y(d.trend); });
+                    this.trendLine.datum(data).attr('d', <any>trendLine)
+                        .style('stroke', this.settings.chart.trendColor);
                 }
 
 						} catch (e) {

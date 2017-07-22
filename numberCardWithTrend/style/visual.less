@@ -29,14 +29,11 @@
         fill: none;
     }
     .axis {
-        .domain {
-            stroke: none;
-        }
         .tick {
             line {
                 stroke: #b4b4b4;
                 stroke-width: 1;
-                opacity: 0.5;
+                opacity: 0.25;
             }
             text {
                 font-size: 14px;
@@ -45,7 +42,14 @@
         }
     }
     .x.axis {
-        .tick line {
+        .domain {
+            stroke: #b4b4b4;
+            stroke-width: 1;
+            opacity: 0.25;
+        }
+    }
+    .y.axis {
+        .domain {
             stroke: none;
         }
     }
