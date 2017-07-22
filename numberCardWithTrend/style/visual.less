@@ -3,3 +3,30 @@
 .card-number {
     font-weight: bold;
 }
+
+.chart {
+    path {
+        stroke: blue;
+        stroke-width: 3;
+        fill: none;
+    }
+    .axis {
+        .domain {
+            stroke: none;
+        }
+        .tick {
+            line {
+                stroke: #b4b4b4;
+                stroke-width: 1;
+            }
+            text {
+                fill: #b4b4b4;
+            }
+        }
+    }
+    .x.axis {
+        .tick line {
+            stroke: none;
+        }
+    }
+}
