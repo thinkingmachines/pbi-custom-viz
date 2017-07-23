@@ -115,12 +115,22 @@ module powerbi.extensibility.visual {
                         return compactInteger(d, 2).toLowerCase();
                     });
 
+                // Change
 
-                let compareValue = getData(dataView.categorical.values, 'compareValue')[0];
-                let stateValue = getData(dataView.categorical.values, 'stateValue')[0];
-                let changeValue = formatNumber(100 * (stateValue - compareValue) / compareValue, 2);
-                this.changeValue.text(changeValue + '%');
+                let changeValue = getData(dataView.categorical.values, 'changeValue')[0];
+                this.changeValue.text(formatNumber(changeValue, 2) + '%');
                 this.changeLabel.text(this.settings.change.text);
+
+                let stateValue = getData(dataView.categorical.values, 'stateValue')[0];
+                let changeColor;
+                if (stateValue <= this.settings.change.limit1) {
+                    changeColor = this.settings.change.color1;
+                } else if (stateValue <= this.settings.change.limit2) {
+                    changeColor = this.settings.change.color2;
+                } else {
+                    changeColor = this.settings.change.color3;
+                }
+                this.changeValue.style('color', changeColor);
 
                 // Chart
 

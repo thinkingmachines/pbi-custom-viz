@@ -16,12 +16,12 @@
             "kind": "Measure"
         },
         {
-            "displayName": "Compare Against",
-            "name": "compareValue",
+            "displayName": "Change Value",
+            "name": "changeValue",
             "kind": "Measure"
         },
         {
-            "displayName": "Compare Measure",
+            "displayName": "State Value",
             "name": "stateValue",
             "kind": "Measure"
         }
@@ -32,7 +32,7 @@
                 {
                     "measure": { "max": 1 },
                     "trendMeasure": { "max": 1 },
-                    "compareValue": { "max": 1 },
+                    "changeValue": { "max": 1 },
                     "stateValue": { "max": 1 }
                 }
             ],
@@ -44,7 +44,7 @@
                     "select": [
                         { "bind": { "to": "measure" } },
                         { "bind": { "to": "trendMeasure" } },
-                        { "bind": { "to": "compareValue" } },
+                        { "bind": { "to": "changeValue" } },
                         { "bind": { "to": "stateValue" } }
                     ]
                 }
@@ -106,6 +106,48 @@
                     "displayName": "Label",
                     "type": {
                         "text": true
+                    }
+                },
+                "color1": {
+                    "displayName": "Color 1",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "limit1": {
+                    "displayName": "Limit 1",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "color2": {
+                    "displayName": "Color 2",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "limit2": {
+                    "displayName": "Limit 2",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "color3": {
+                    "displayName": "Color 3",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
                     }
                 }
             }

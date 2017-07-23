@@ -46,6 +46,11 @@ module powerbi.extensibility.visual {
 
     export class ChangeSettings {
         public text: string = '';
+        public color1: string = '#f02708';
+        public limit1: number = 33;
+        public color2: string = '#f3a30c';
+        public limit2: number = 67;
+        public color3: string = '#37b012';
     }
 
 }
