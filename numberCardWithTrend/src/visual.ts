@@ -53,6 +53,21 @@ module powerbi.extensibility.visual {
         }, []);
     }
 
+    function leastSquares (xSeries, ySeries) {
+        let xBar = d3.sum(xSeries) * 1.0 / xSeries.length;
+        let yBar = d3.sum(ySeries) * 1.0 / ySeries.length;
+
+        let ssXX = d3.sum(xSeries, function (d: any) { return Math.pow(d - xBar, 2); });
+        let ssYY = d3.sum(ySeries, function (d: any) { return Math.pow(d - yBar, 2); });
+        let ssXY = d3.sum(xSeries, function (d: any, i: any) { return (d - xBar) * (ySeries[i] - yBar); });
+
+        let slope = ssXY / ssXX;
+        let intercept = yBar - (xBar * slope);
+        let rSquare = Math.pow(ssXY, 2) / (ssXX * ssYY);
+
+        return [slope, intercept, rSquare];
+    }
+
     export class Visual implements IVisual {
         private target: Selection<HTMLElement>;
         private host: IVisualHost;
@@ -94,8 +109,8 @@ module powerbi.extensibility.visual {
                 .attr('transform', 'translate(60, 20)');
             this.line = this.chart.append('path')
                 .attr('transform', 'translate(60, 20)');
-            this.trendLine = this.chart.append('path')
-                .style('stroke-dasharray', '3, 3')
+            this.trendLine = this.chart.append('line')
+                .attr('class', 'trendline')
                 .attr('transform', 'translate(60, 20)');
             this.host = options.host;
         }
@@ -152,14 +167,14 @@ module powerbi.extensibility.visual {
                         return compactInteger(d, 2).toLowerCase();
                     });
 
+                // Data
+
                 let dates = dataView.categorical.categories[0].values;
                 let values = getData(dataView.categorical.values, 'measure');
-                let trend = getData(dataView.categorical.values, 'trendMeasure');
                 let data = dates.map(function (d, i) {
                     return {
                         date: d,
-                        value: values[i],
-                        trend: trend.length > 0 && trend[i] || null,
+                        value: values[i]
                     };
                 });
 
@@ -167,13 +182,18 @@ module powerbi.extensibility.visual {
                 xt.domain(d3.extent(data, function (d: any) { return d.date; }));
                 y.domain(d3.extent(data, function (d: any) { return d.value; }));
 
+                // Render
+
                 this.xAxis.attr('transform', 'translate(60, ' + (height + 20) + ')')
                     .call(xAxis);
                 this.yAxis.call(yAxis);
-
-                this.line.attr('d', null);
-                this.trendLine.attr('d', null);
                 this.bars.html(null);
+                this.line.attr('d', null);
+                this.trendLine
+                    .attr('x1', null)
+                    .attr('y1', null)
+                    .attr('x2', null)
+                    .attr('y2', null);
 
                 if (this.settings.chart.type === 'bar') {
                     this.bars.selectAll('.bar').data(data).enter()
@@ -191,11 +211,18 @@ module powerbi.extensibility.visual {
                         .style('stroke', this.settings.chart.color);
                 }
 
-                if (trend.length) {
-                    let trendLine = d3.svg.line()
-                        .x(function (d: any) { return xt(d.date); })
-                        .y(function (d: any) { return y(d.trend); });
-                    this.trendLine.datum(data).attr('d', <any>trendLine)
+                if (this.settings.chart.showTrend) {
+                    let trendX = d3.range(1, dates.length + 1);
+                    let [slope, intercept, rSquare] = leastSquares(trendX, values);
+                    let x1 = dates[0];
+                    let y1 = slope + intercept;
+                    let x2 = dates[dates.length - 1];
+                    let y2 = slope * dates.length + intercept;
+                    this.trendLine
+                        .attr('x1', xt(<Date>x1))
+                        .attr('y1', y(y1))
+                        .attr('x2', xt(<Date>x2))
+                        .attr('y2', y(y2))
                         .style('stroke', this.settings.chart.trendColor);
                 }
 

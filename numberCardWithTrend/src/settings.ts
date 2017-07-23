@@ -41,6 +41,7 @@ module powerbi.extensibility.visual {
     export class ChartSettings {
         public type: string = 'bar';
         public color: string = 'black';
+        public showTrend: boolean = true;
         public trendColor: string = 'black';
     }
 
