@@ -98,6 +98,17 @@
                     }
                 }
             }
+        },
+        "change": {
+            "displayName": "Change",
+            "properties": {
+                "text": {
+                    "displayName": "Label",
+                    "type": {
+                        "text": true
+                    }
+                }
+            }
         }
     }
 }

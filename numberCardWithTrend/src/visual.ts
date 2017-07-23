@@ -71,7 +71,8 @@ module powerbi.extensibility.visual {
         private trendLine: Selection<HTMLElement>;
 
         constructor(options: VisualConstructorOptions) {
-            this.target = d3.select(options.element).append('div');
+            this.target = d3.select(options.element).append('div')
+                .attr('class', 'card');
             this.cardTitle = this.target.append('div')
                 .attr('class', 'card-title');
             this.measure = this.cardTitle.append('div')
@@ -88,14 +89,14 @@ module powerbi.extensibility.visual {
                 .attr('class', 'x axis');
             this.yAxis = this.chart.append('g')
                 .attr('class', 'y axis')
-                .attr('transform', 'translate(60, 30)');
+                .attr('transform', 'translate(60, 20)');
             this.bars = this.chart.append('g')
-                .attr('transform', 'translate(60, 30)');
+                .attr('transform', 'translate(60, 20)');
             this.line = this.chart.append('path')
-                .attr('transform', 'translate(60, 30)');
+                .attr('transform', 'translate(60, 20)');
             this.trendLine = this.chart.append('path')
                 .style('stroke-dasharray', '3, 3')
-                .attr('transform', 'translate(60, 30)');
+                .attr('transform', 'translate(60, 20)');
             this.host = options.host;
         }
 
@@ -119,16 +120,16 @@ module powerbi.extensibility.visual {
                 let stateValue = getData(dataView.categorical.values, 'stateValue')[0];
                 let changeValue = formatNumber(100 * (stateValue - compareValue) / compareValue, 2);
                 this.changeValue.text(changeValue + '%');
-                this.changeLabel.text('change from last year');
+                this.changeLabel.text(this.settings.change.text);
 
                 // Chart
 
                 let width = options.viewport.width - 60;
-                let height = options.viewport.height - 80 - 30 - 30;
+                let height = options.viewport.height - 40 - 20 - 20;
                 this.svg.attr('width', width + 60);
-                this.svg.attr('height', height + 30 + 30);
+                this.svg.attr('height', height + 20 + 20);
 
-                let xo = d3.scale.ordinal().rangeBands([0, width], 0.05);
+                let xo = d3.scale.ordinal().rangeBands([0, width], 0.25);
                 let xt = d3.time.scale().range([0, width]);
                 let y = d3.scale.linear().range([height, 0]);
                 let xAxis = d3.svg.axis().orient('bottom')
@@ -156,12 +157,15 @@ module powerbi.extensibility.visual {
                 xt.domain(d3.extent(data, function (d: any) { return d.date; }));
                 y.domain(d3.extent(data, function (d: any) { return d.value; }));
 
-                this.xAxis.attr('transform', 'translate(60, ' + (height + 30) + ')')
+                this.xAxis.attr('transform', 'translate(60, ' + (height + 20) + ')')
                     .call(xAxis);
                 this.yAxis.call(yAxis);
 
+                this.line.attr('d', null);
+                this.trendLine.attr('d', null);
+                this.bars.html(null);
+
                 if (this.settings.chart.type === 'bar') {
-                    this.line.attr('d', null);
                     this.bars.selectAll('.bar').data(data).enter()
                         .append('rect')
                         .style('fill', this.settings.chart.color)
@@ -170,7 +174,6 @@ module powerbi.extensibility.visual {
                         .attr('width', xo.rangeBand())
                         .attr('height', function (d: any) { return height - y(d.value); });
                 } else {
-                    this.bars.html(null);
                     let line = d3.svg.line()
                         .x(function (d: any) { return xt(d.date); })
                         .y(function (d: any) { return y(d.value); });
@@ -178,7 +181,6 @@ module powerbi.extensibility.visual {
                         .style('stroke', this.settings.chart.color);
                 }
 
-                this.trendLine.attr('d', null);
                 if (trend.length) {
                     let trendLine = d3.svg.line()
                         .x(function (d: any) { return xt(d.date); })

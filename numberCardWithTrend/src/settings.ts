@@ -31,6 +31,7 @@ module powerbi.extensibility.visual {
     export class VisualSettings extends DataViewObjectsParser {
         public measure: MeasureSettings = new MeasureSettings();
         public chart: ChartSettings = new ChartSettings();
+        public change: ChangeSettings = new ChangeSettings();
     }
 
     export class MeasureSettings {
@@ -38,9 +39,13 @@ module powerbi.extensibility.visual {
     }
 
     export class ChartSettings {
-        public type: string = 'line';
+        public type: string = 'bar';
         public color: string = 'black';
         public trendColor: string = 'black';
+    }
+
+    export class ChangeSettings {
+        public text: string = '';
     }
 
 }
