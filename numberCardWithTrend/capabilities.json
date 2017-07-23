@@ -30,21 +30,22 @@
         {
             "conditions": [
                 {
-                    "measure": {
-                        "max": 1
-                    }
+                    "measure": { "max": 1 },
+                    "trendMeasure": { "max": 1 },
+                    "compareValue": { "max": 1 },
+                    "stateValue": { "max": 1 }
                 }
             ],
             "categorical": {
                 "categories": {
-                    "for": {
-                        "in": "axis"
-                    }
+                    "for": { "in": "axis" }
                 },
                 "values": {
                     "select": [
                         { "bind": { "to": "measure" } },
-                        { "bind": { "to": "trendMeasure" } }
+                        { "bind": { "to": "trendMeasure" } },
+                        { "bind": { "to": "compareValue" } },
+                        { "bind": { "to": "stateValue" } }
                     ]
                 }
             }

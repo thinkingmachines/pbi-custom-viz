@@ -35,13 +35,22 @@ module powerbi.extensibility.visual {
         measure: any;
     };
 
-    function visualTransform(options: VisualUpdateOptions, host: IVisualHost): ViewModel {
+    function visualTransform (options: VisualUpdateOptions, host: IVisualHost): ViewModel {
         let dataView = options && options.dataViews && options.dataViews[0];
         let values = dataView.categorical.values[0].values;
         let measure = values[values.length - 1];
         return {
             measure: measure
         };
+    }
+
+    function getData (values, role): any[] {
+        return values.reduce(function (data, _values, value) {
+            if (_values.source.roles[role]) {
+                return _values.values;
+            }
+            return data;
+        }, []);
     }
 
     export class Visual implements IVisual {
@@ -96,14 +105,23 @@ module powerbi.extensibility.visual {
                 this.settings = Visual.parseSettings(dataView);
                 let viewModel: ViewModel = visualTransform(options, this.host);
 
+                // Measure
+
                 this.measure
                     .style('font-size', pixelConverterFromPoint(this.settings.measure.fontSize))
                     .datum(viewModel.measure)
                     .text(function (d) {
-                        return compactInteger(d).toLowerCase();
+                        return compactInteger(d, 2).toLowerCase();
                     });
-                this.changeValue.text('7.19%');
+
+
+                let compareValue = getData(dataView.categorical.values, 'compareValue')[0];
+                let stateValue = getData(dataView.categorical.values, 'stateValue')[0];
+                let changeValue = formatNumber(100 * (stateValue - compareValue) / compareValue, 2);
+                this.changeValue.text(changeValue + '%');
                 this.changeLabel.text('change from last year');
+
+                // Chart
 
                 let width = options.viewport.width - 60;
                 let height = options.viewport.height - 80 - 30 - 30;
@@ -120,16 +138,12 @@ module powerbi.extensibility.visual {
                 let yAxis = d3.svg.axis().scale(y).orient('left').ticks(5)
                     .tickSize(-width)
                     .tickFormat(function (d) {
-                        return compactInteger(d).toLowerCase();
+                        return compactInteger(d, 2).toLowerCase();
                     });
 
                 let dates = dataView.categorical.categories[0].values;
-                // FIXME: Use category.source.roles!
-                let values = dataView.categorical.values[0].values;
-                let trend = [];
-                if (dataView.categorical.values.length > 1) {
-                    trend = dataView.categorical.values[1].values;
-                }
+                let values = getData(dataView.categorical.values, 'measure');
+                let trend = getData(dataView.categorical.values, 'trendMeasure');
                 let data = dates.map(function (d, i) {
                     return {
                         date: d,
