@@ -72,7 +72,8 @@ module powerbi.extensibility.visual {
         private target: Selection<HTMLElement>;
         private host: IVisualHost;
         private settings: VisualSettings;
-        private cardTitle: Selection<HTMLElement>;
+        private header: Selection<HTMLElement>;
+        private image: Selection<HTMLElement>;
         private measure: Selection<HTMLElement>;
         private change: Selection<HTMLElement>;
         private changeValue: Selection<HTMLElement>;
@@ -88,16 +89,21 @@ module powerbi.extensibility.visual {
         constructor(options: VisualConstructorOptions) {
             this.target = d3.select(options.element).append('div')
                 .attr('class', 'card');
-            this.cardTitle = this.target.append('div')
-                .attr('class', 'card-title');
-            this.measure = this.cardTitle.append('div')
+
+            this.image = this.target.append('div')
+                .attr('class', 'image');
+
+            this.header = this.target.append('div')
+                .attr('class', 'header');
+            this.measure = this.header.append('div')
                 .attr('class', 'measure');
-            this.change = this.cardTitle.append('div')
+            this.change = this.header.append('div')
                 .attr('class', 'change');
             this.changeValue = this.change.append('div')
                 .attr('class', 'change-value');
             this.changeLabel = this.change.append('div')
                 .attr('class', 'change-label');
+
             this.svg = this.target.append('svg');
             this.chart = this.svg.append('g').attr('class', 'chart');
             this.xAxis = this.chart.append('g')
@@ -112,6 +118,7 @@ module powerbi.extensibility.visual {
             this.trendLine = this.chart.append('line')
                 .attr('class', 'trendline')
                 .attr('transform', 'translate(60, 20)');
+
             this.host = options.host;
         }
 
@@ -120,6 +127,26 @@ module powerbi.extensibility.visual {
                 let dataView = options && options.dataViews && options.dataViews[0];
                 this.settings = Visual.parseSettings(dataView);
                 let viewModel: ViewModel = visualTransform(options, this.host);
+
+                // Reset
+                this.image.html(null);
+                this.bars.html(null);
+                this.line.attr('d', null);
+                this.trendLine
+                    .attr('x1', null)
+                    .attr('y1', null)
+                    .attr('x2', null)
+                    .attr('y2', null);
+
+                if (this.settings.image.url) {
+                    this.target.style('padding-top', '40px');
+                    this.image.append('img')
+                        .attr('src', this.settings.image.url)
+                        .style('transform-origin', 'top left')
+                        .style('transform', 'scale(' + (this.settings.image.scale / 100) + ')')
+                } else {
+                    this.target.style('padding-top', null);
+                }
 
                 // Measure
 
@@ -153,8 +180,12 @@ module powerbi.extensibility.visual {
 
                 // Chart
 
+                let chartTop = 40;
+                if (this.settings.image.url.length > 0) {
+                    chartTop += 40;
+                }
                 let width = options.viewport.width - 60;
-                let height = options.viewport.height - 40 - 20 - 20;
+                let height = options.viewport.height - chartTop - 20 - 20;
                 this.svg.attr('width', width + 60);
                 this.svg.attr('height', height + 20 + 20);
 
@@ -191,13 +222,6 @@ module powerbi.extensibility.visual {
                 this.xAxis.attr('transform', 'translate(60, ' + (height + 20) + ')')
                     .call(xAxis);
                 this.yAxis.call(yAxis);
-                this.bars.html(null);
-                this.line.attr('d', null);
-                this.trendLine
-                    .attr('x1', null)
-                    .attr('y1', null)
-                    .attr('x2', null)
-                    .attr('y2', null);
 
                 if (this.settings.chart.type === 'bar') {
                     this.bars.selectAll('.bar').data(data).enter()
@@ -230,7 +254,7 @@ module powerbi.extensibility.visual {
                         .style('stroke', this.settings.chart.trendColor);
                 }
 
-						} catch (e) {
+            } catch (e) {
                 console.error(e);
                 throw e;
             }

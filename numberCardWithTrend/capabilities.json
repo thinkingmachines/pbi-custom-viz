@@ -45,6 +45,23 @@
         }
     ],
     "objects": {
+        "image": {
+            "displayName": "Image",
+            "properties": {
+                "url": {
+                    "displayName": "Image URL",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "scale": {
+                    "displayName": "Scale",
+                    "type": {
+                        "numeric": true
+                    }
+                }
+            }
+        },
         "measure": {
             "displayName": "Measure",
             "properties": {
