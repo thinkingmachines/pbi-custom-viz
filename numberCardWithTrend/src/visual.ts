@@ -44,7 +44,7 @@ module powerbi.extensibility.visual {
         if (d > 1) {
             return compactInteger(d).toLowerCase();
         } else {
-            return compactInteger(d * 100, 2) + '%';
+            return formatNumber(d * 100, 2) + '%';
         }
     }
 
