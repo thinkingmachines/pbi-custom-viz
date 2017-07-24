@@ -40,11 +40,13 @@ module powerbi.extensibility.visual {
         }, []);
     }
 
-    function formatMeasure (d) {
-        if (d > 1) {
-            return compactInteger(d).toLowerCase();
-        } else {
-            return formatNumber(d * 100, 2) + '%';
+    function formatMeasure (format) {
+        return function (d) {
+            if (format === 'unit') {
+                return compactInteger(d).toLowerCase();
+            } else {
+                return formatNumber(d * 100, 2) + '%';
+            }
         }
     }
 
@@ -200,8 +202,7 @@ module powerbi.extensibility.visual {
                     .tickFormat(d3.time.format('%b %Y'))
                     .ticks(2);
                 let yAxis = d3.svg.axis().scale(y).orient('left').ticks(5)
-                    .tickSize(-width)
-                    .tickFormat(formatMeasure);
+                    .tickSize(-width);
 
                 // Data
 
@@ -218,9 +219,13 @@ module powerbi.extensibility.visual {
                 xt.domain(d3.extent(data, function (d: any) { return d.date; }));
                 y.domain([0, d3.max(data, function (d: any) { return d.value; })]);
 
+                let format = d3.max(values) > 1 ? 'unit' : 'percentage';
+                yAxis.tickFormat(formatMeasure(format));
+
                 // Render
 
-                this.xAxis.attr('transform', 'translate(60, ' + (height + 20) + ')')
+                this.xAxis
+                    .attr('transform', 'translate(60, ' + (height + 20) + ')')
                     .call(xAxis);
                 this.yAxis.call(yAxis);
 
