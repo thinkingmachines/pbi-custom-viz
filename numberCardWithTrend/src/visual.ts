@@ -111,14 +111,14 @@ module powerbi.extensibility.visual {
                 .attr('class', 'x axis');
             this.yAxis = this.chart.append('g')
                 .attr('class', 'y axis')
-                .attr('transform', 'translate(60, 20)');
+                .attr('transform', 'translate(40, 20)');
             this.bars = this.chart.append('g')
-                .attr('transform', 'translate(60, 20)');
+                .attr('transform', 'translate(40, 20)');
             this.line = this.chart.append('path')
-                .attr('transform', 'translate(60, 20)');
+                .attr('transform', 'translate(40, 20)');
             this.trendLine = this.chart.append('line')
                 .attr('class', 'trendline')
-                .attr('transform', 'translate(60, 20)');
+                .attr('transform', 'translate(40, 20)');
 
             this.host = options.host;
         }
@@ -189,9 +189,9 @@ module powerbi.extensibility.visual {
                 if (this.settings.image.url && this.settings.image.url.length > 0) {
                     chartTop += 80;
                 }
-                let width = options.viewport.width - 60;
+                let width = options.viewport.width - 40;
                 let height = options.viewport.height - chartTop - 20 - 20 - 20;
-                this.svg.attr('width', width + 60);
+                this.svg.attr('width', width + 40);
                 this.svg.attr('height', height + 20 + 20);
 
                 let xo = d3.scale.ordinal().rangeBands([0, width], 0.25);
@@ -225,7 +225,7 @@ module powerbi.extensibility.visual {
                 // Render
 
                 this.xAxis
-                    .attr('transform', 'translate(60, ' + (height + 20) + ')')
+                    .attr('transform', 'translate(40, ' + (height + 20) + ')')
                     .call(xAxis);
                 this.yAxis.call(yAxis);
 
