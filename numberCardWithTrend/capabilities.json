@@ -6,6 +6,16 @@
             "kind": "Measure"
         },
         {
+            "displayName": "Metric",
+            "name": "metric",
+            "kind": "Measure"
+        },
+        {
+            "displayName": "Chart Measure",
+            "name": "chartMeasure",
+            "kind": "Measure"
+        },
+        {
             "displayName": "Axis",
             "name": "axis",
             "kind": "GroupingOrMeasure"
@@ -26,6 +36,8 @@
             "conditions": [
                 {
                     "measure": { "max": 1 },
+                    "metric": { "max": 1 },
+                    "chartMeasure": { "max": 1 },
                     "changeValue": { "max": 1 },
                     "stateValue": { "max": 1 }
                 }
@@ -37,6 +49,8 @@
                 "values": {
                     "select": [
                         { "bind": { "to": "measure" } },
+                        { "bind": { "to": "metric" } },
+                        { "bind": { "to": "chartMeasure" } },
                         { "bind": { "to": "changeValue" } },
                         { "bind": { "to": "stateValue" } }
                     ]
@@ -72,22 +86,6 @@
                             "fontSize": true
                         }
                     }
-                 },
-                 "type": {
-                     "displayName": "Type",
-                     "type": {
-                         "enumeration": [
-                            { "displayName": "Unit", "value": "unit" },
-                            { "displayName": "Currency", "value": "currency" },
-                            { "displayName": "Percentage", "value": "percentage" }
-                         ]
-                     }
-                 },
-                 "currency": {
-                     "displayName": "Currency",
-                     "type": {
-                         "text": true
-                     }
                  }
             }
         },

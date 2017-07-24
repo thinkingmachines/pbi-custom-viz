@@ -42,8 +42,6 @@ module powerbi.extensibility.visual {
 
     export class MeasureSettings {
         public fontSize: number = 24;
-        public type: string = 'unit';
-        public currency: string = '$';
     }
 
     export class ChartSettings {
@@ -57,9 +55,9 @@ module powerbi.extensibility.visual {
         public fontSize: number = 18;
         public text: string = '';
         public color1: string = '#f02708';
-        public limit1: number = 33;
+        public limit1: number = 0.33;
         public color2: string = '#f3a30c';
-        public limit2: number = 67;
+        public limit2: number = 0.67;
         public color3: string = '#37b012';
     }
 

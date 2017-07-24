@@ -31,19 +31,6 @@ module powerbi.extensibility.visual {
 
     import pixelConverterFromPoint = powerbi.extensibility.utils.type.PixelConverter.fromPoint;
 
-    interface ViewModel {
-        measure: any;
-    };
-
-    function visualTransform (options: VisualUpdateOptions, host: IVisualHost): ViewModel {
-        let dataView = options && options.dataViews && options.dataViews[0];
-        let values = dataView.categorical.values[0].values;
-        let measure = values[values.length - 1];
-        return {
-            measure: measure
-        };
-    }
-
     function getData (values, role): any[] {
         return values.reduce(function (data, _values, value) {
             if (_values.source.roles[role]) {
@@ -51,6 +38,14 @@ module powerbi.extensibility.visual {
             }
             return data;
         }, []);
+    }
+
+    function formatMeasure (d) {
+        if (d > 1) {
+            return compactInteger(d).toLowerCase();
+        } else {
+            return compactInteger(d * 100, 2) + '%';
+        }
     }
 
     function leastSquares (xSeries, ySeries) {
@@ -68,31 +63,13 @@ module powerbi.extensibility.visual {
         return [slope, intercept, rSquare];
     }
 
-
-    function formatMeasure (settings) {
-        switch (settings.type) {
-            case 'percentage':
-                return function (d) {
-                    return compactInteger(d * 100, 2) + '%';
-                };
-            case 'currency':
-                return function (d) {
-                    return settings.currency + compactInteger(d, 2).toLowerCase();
-                };
-            case 'unit':
-            default:
-                return function (d) {
-                    return compactInteger(d, 2).toLowerCase();
-                };
-        }
-    }
-
     export class Visual implements IVisual {
         private target: Selection<HTMLElement>;
         private host: IVisualHost;
         private settings: VisualSettings;
-        private header: Selection<HTMLElement>;
         private image: Selection<HTMLElement>;
+        private header: Selection<HTMLElement>;
+        private metric: Selection<HTMLElement>;
         private measure: Selection<HTMLElement>;
         private change: Selection<HTMLElement>;
         private changeValue: Selection<HTMLElement>;
@@ -111,6 +88,9 @@ module powerbi.extensibility.visual {
 
             this.image = this.target.append('div')
                 .attr('class', 'image');
+
+            this.metric = this.target.append('div')
+                .attr('class', 'metric');
 
             this.header = this.target.append('div')
                 .attr('class', 'header');
@@ -145,20 +125,11 @@ module powerbi.extensibility.visual {
             try {
                 let dataView = options && options.dataViews && options.dataViews[0];
                 this.settings = Visual.parseSettings(dataView);
-                let viewModel: ViewModel = visualTransform(options, this.host);
 
                 // Reset
                 this.image.html(null);
-                this.bars.html(null);
-                this.line.attr('d', null);
-                this.trendLine
-                    .attr('x1', null)
-                    .attr('y1', null)
-                    .attr('x2', null)
-                    .attr('y2', null);
-
                 if (this.settings.image.url) {
-                    this.target.style('padding-top', '40px');
+                    this.target.style('padding-top', '80px');
                     this.image.append('img')
                         .attr('src', this.settings.image.url)
                         .style('transform-origin', 'top left')
@@ -167,12 +138,26 @@ module powerbi.extensibility.visual {
                     this.target.style('padding-top', null);
                 }
 
+                this.metric.html(null);
+                this.bars.html(null);
+                this.line.attr('d', null);
+                this.trendLine
+                    .attr('x1', null)
+                    .attr('y1', null)
+                    .attr('x2', null)
+                    .attr('y2', null);
+
+                // Metric
+
+                let metricValues = getData(dataView.categorical.values, 'metric');
+                this.metric.text(metricValues[metricValues.length - 1]);
+
                 // Measure
 
+                let measureValues = getData(dataView.categorical.values, 'measure');
                 this.measure
                     .style('font-size', pixelConverterFromPoint(this.settings.measure.fontSize))
-                    .datum(viewModel.measure)
-                    .text(formatMeasure(this.settings.measure));
+                    .text(measureValues[measureValues.length - 1]);
 
                 // Change
 
@@ -180,7 +165,7 @@ module powerbi.extensibility.visual {
                 let changeValue = changeValues[changeValues.length - 1];
                 this.changeValue
                     .style('font-size', pixelConverterFromPoint(this.settings.change.fontSize))
-                    .text(formatNumber(changeValue, 2) + '%');
+                    .text(formatNumber(changeValue * 100, 2) + '%');
                 let stateValues = getData(dataView.categorical.values, 'stateValue');
                 let stateValue = stateValues[stateValues.length - 1];
                 let changeColor;
@@ -199,11 +184,11 @@ module powerbi.extensibility.visual {
                 // Chart
 
                 let chartTop = 40;
-                if (this.settings.image.url.length > 0) {
-                    chartTop += 40;
+                if (this.settings.image.url && this.settings.image.url.length > 0) {
+                    chartTop += 80;
                 }
                 let width = options.viewport.width - 60;
-                let height = options.viewport.height - chartTop - 20 - 20;
+                let height = options.viewport.height - chartTop - 20 - 20 - 20;
                 this.svg.attr('width', width + 60);
                 this.svg.attr('height', height + 20 + 20);
 
@@ -216,12 +201,12 @@ module powerbi.extensibility.visual {
                     .ticks(2);
                 let yAxis = d3.svg.axis().scale(y).orient('left').ticks(5)
                     .tickSize(-width)
-                    .tickFormat(formatMeasure(this.settings.measure));
+                    .tickFormat(formatMeasure);
 
                 // Data
 
                 let dates = dataView.categorical.categories[0].values;
-                let values = getData(dataView.categorical.values, 'measure');
+                let values = getData(dataView.categorical.values, 'chartMeasure');
                 let data = dates.map(function (d, i) {
                     return {
                         date: d,
@@ -231,7 +216,7 @@ module powerbi.extensibility.visual {
 
                 xo.domain(data.map(function (d: any) { return d.date; }));
                 xt.domain(d3.extent(data, function (d: any) { return d.date; }));
-                y.domain(d3.extent(data, function (d: any) { return d.value; }));
+                y.domain([0, d3.max(data, function (d: any) { return d.value; })]);
 
                 // Render
 
