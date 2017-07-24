@@ -46,6 +46,7 @@ module powerbi.extensibility.visual {
     }
 
     export class ChangeSettings {
+        public fontSize: number = 18;
         public text: string = '';
         public color1: string = '#f02708';
         public limit1: number = 33;

@@ -133,8 +133,9 @@ module powerbi.extensibility.visual {
                 // Change
 
                 let changeValue = getData(dataView.categorical.values, 'changeValue')[0];
-                this.changeValue.text(formatNumber(changeValue, 2) + '%');
-                this.changeLabel.text(this.settings.change.text);
+                this.changeValue
+                    .style('font-size', pixelConverterFromPoint(this.settings.change.fontSize))
+                    .text(formatNumber(changeValue, 2) + '%');
 
                 let stateValue = getData(dataView.categorical.values, 'stateValue')[0];
                 let changeColor;
@@ -145,7 +146,10 @@ module powerbi.extensibility.visual {
                 } else {
                     changeColor = this.settings.change.color3;
                 }
-                this.changeValue.style('color', changeColor);
+                this.changeValue
+                    .style('color', changeColor);
+
+                this.changeLabel.text(this.settings.change.text);
 
                 // Chart
 

@@ -101,6 +101,14 @@
         "change": {
             "displayName": "Change",
             "properties": {
+                "fontSize": {
+                    "displayName": "Font Size",
+                    "type": {
+                        "formatting": {
+                            "fontSize": true
+                        }
+                    }
+                },
                 "text": {
                     "displayName": "Label",
                     "type": {
