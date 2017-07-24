@@ -72,6 +72,22 @@
                             "fontSize": true
                         }
                     }
+                 },
+                 "type": {
+                     "displayName": "Type",
+                     "type": {
+                         "enumeration": [
+                            { "displayName": "Unit", "value": "unit" },
+                            { "displayName": "Currency", "value": "currency" },
+                            { "displayName": "Percentage", "value": "percentage" }
+                         ]
+                     }
+                 },
+                 "currency": {
+                     "displayName": "Currency",
+                     "type": {
+                         "text": true
+                     }
                  }
             }
         },

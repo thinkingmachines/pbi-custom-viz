@@ -68,6 +68,25 @@ module powerbi.extensibility.visual {
         return [slope, intercept, rSquare];
     }
 
+
+    function formatMeasure (settings) {
+        switch (settings.type) {
+            case 'percentage':
+                return function (d) {
+                    return compactInteger(d * 100, 2) + '%';
+                };
+            case 'currency':
+                return function (d) {
+                    return settings.currency + compactInteger(d, 2).toLowerCase();
+                };
+            case 'unit':
+            default:
+                return function (d) {
+                    return compactInteger(d, 2).toLowerCase();
+                };
+        }
+    }
+
     export class Visual implements IVisual {
         private target: Selection<HTMLElement>;
         private host: IVisualHost;
@@ -153,18 +172,17 @@ module powerbi.extensibility.visual {
                 this.measure
                     .style('font-size', pixelConverterFromPoint(this.settings.measure.fontSize))
                     .datum(viewModel.measure)
-                    .text(function (d) {
-                        return compactInteger(d, 2).toLowerCase();
-                    });
+                    .text(formatMeasure(this.settings.measure));
 
                 // Change
 
-                let changeValue = getData(dataView.categorical.values, 'changeValue')[0];
+                let changeValues = getData(dataView.categorical.values, 'changeValue');
+                let changeValue = changeValues[changeValues.length - 1];
                 this.changeValue
                     .style('font-size', pixelConverterFromPoint(this.settings.change.fontSize))
                     .text(formatNumber(changeValue, 2) + '%');
-
-                let stateValue = getData(dataView.categorical.values, 'stateValue')[0];
+                let stateValues = getData(dataView.categorical.values, 'stateValue');
+                let stateValue = stateValues[stateValues.length - 1];
                 let changeColor;
                 if (stateValue <= this.settings.change.limit1) {
                     changeColor = this.settings.change.color1;
@@ -198,9 +216,7 @@ module powerbi.extensibility.visual {
                     .ticks(2);
                 let yAxis = d3.svg.axis().scale(y).orient('left').ticks(5)
                     .tickSize(-width)
-                    .tickFormat(function (d) {
-                        return compactInteger(d, 2).toLowerCase();
-                    });
+                    .tickFormat(formatMeasure(this.settings.measure));
 
                 // Data
 
