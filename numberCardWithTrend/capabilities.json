@@ -59,6 +59,17 @@
         }
     ],
     "objects": {
+        "card": {
+            "displayName": "Card",
+            "properties": {
+                "padding": {
+                    "displayName": "Padding",
+                    "type": {
+                        "numeric": true
+                    }
+                }
+            }
+        },
         "image": {
             "displayName": "Image",
             "properties": {
@@ -72,6 +83,29 @@
                     "displayName": "Scale",
                     "type": {
                         "numeric": true
+                    }
+                }
+            }
+        },
+        "metric": {
+            "displayName": "Metric",
+            "properties": {
+                 "fontSize": {
+                    "displayName": "Font Size",
+                    "type": {
+                        "formatting": {
+                            "fontSize": true
+                        }
+                    }
+                 },
+                "fontColor": {
+                    "displayName": "Font Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
                     }
                 }
             }

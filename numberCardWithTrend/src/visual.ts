@@ -110,15 +110,11 @@ module powerbi.extensibility.visual {
             this.xAxis = this.chart.append('g')
                 .attr('class', 'x axis');
             this.yAxis = this.chart.append('g')
-                .attr('class', 'y axis')
-                .attr('transform', 'translate(40, 20)');
-            this.bars = this.chart.append('g')
-                .attr('transform', 'translate(40, 20)');
-            this.line = this.chart.append('path')
-                .attr('transform', 'translate(40, 20)');
+                .attr('class', 'y axis');
+            this.bars = this.chart.append('g');
+            this.line = this.chart.append('path');
             this.trendLine = this.chart.append('line')
-                .attr('class', 'trendline')
-                .attr('transform', 'translate(40, 20)');
+                .attr('class', 'trendline');
 
             this.host = options.host;
         }
@@ -129,6 +125,7 @@ module powerbi.extensibility.visual {
                 this.settings = Visual.parseSettings(dataView);
 
                 // Reset
+
                 this.image.html(null);
                 if (this.settings.image.url) {
                     this.target.style('padding-top', '80px');
@@ -139,9 +136,9 @@ module powerbi.extensibility.visual {
                 } else {
                     this.target.style('padding-top', null);
                 }
-
                 this.metric.html(null);
-                this.bars.html(null);
+                this.bars.html(null)
+
                 this.line.attr('d', null);
                 this.trendLine
                     .attr('x1', null)
@@ -149,10 +146,17 @@ module powerbi.extensibility.visual {
                     .attr('x2', null)
                     .attr('y2', null);
 
+                // Card
+
+                this.target.style('padding', this.settings.card.padding + 'px');
+
                 // Metric
 
                 let metricValues = getData(dataView.categorical.values, 'metric');
-                this.metric.text(metricValues[metricValues.length - 1]);
+                this.metric
+                    .text(metricValues[metricValues.length - 1])
+                    .style('font-size', pixelConverterFromPoint(this.settings.metric.fontSize))
+                    .style('color', this.settings.metric.fontColor)
 
                 // Measure
 
@@ -189,10 +193,13 @@ module powerbi.extensibility.visual {
                 if (this.settings.image.url && this.settings.image.url.length > 0) {
                     chartTop += 80;
                 }
-                let width = options.viewport.width - 40;
-                let height = options.viewport.height - chartTop - 20 - 20 - 20;
-                this.svg.attr('width', width + 40);
-                this.svg.attr('height', height + 20 + 20);
+                let yAxisWidth = 40;
+                let headerHeight = 40;
+                let padding = this.settings.card.padding * 2;
+                let width = options.viewport.width - yAxisWidth - padding;
+                let height = options.viewport.height - chartTop - headerHeight - 20 - padding;
+                this.svg.attr('width', width + yAxisWidth);
+                this.svg.attr('height', height + headerHeight);
 
                 let xo = d3.scale.ordinal().rangeBands([0, width], 0.25);
                 let xt = d3.time.scale().range([0, width]);
@@ -225,23 +232,28 @@ module powerbi.extensibility.visual {
                 // Render
 
                 this.xAxis
-                    .attr('transform', 'translate(40, ' + (height + 20) + ')')
+                    .attr('transform', 'translate(' + yAxisWidth + ', ' + (height + 20) + ')')
                     .call(xAxis);
-                this.yAxis.call(yAxis);
+                this.yAxis
+                    .attr('transform', 'translate(' + yAxisWidth + ', 20)')
+                    .call(yAxis);
 
                 if (this.settings.chart.type === 'bar') {
-                    this.bars.selectAll('.bar').data(data).enter()
+                    this.bars
+                        .attr('transform', 'translate(' + yAxisWidth + ', 20)')
+                        .selectAll('.bar').data(data).enter()
                         .append('rect')
-                        .style('fill', this.settings.chart.color)
-                        .attr('x', function (d: any) { return xo(d.date); })
-                        .attr('y', function (d: any) { return y(d.value); })
-                        .attr('width', xo.rangeBand())
-                        .attr('height', function (d: any) { return height - y(d.value); });
+                            .style('fill', this.settings.chart.color)
+                            .attr('x', function (d: any) { return xo(d.date); })
+                            .attr('y', function (d: any) { return y(d.value); })
+                            .attr('width', xo.rangeBand())
+                            .attr('height', function (d: any) { return height - y(d.value); });
                 } else {
                     let line = d3.svg.line()
                         .x(function (d: any) { return xt(d.date); })
                         .y(function (d: any) { return y(d.value); });
                     this.line.datum(data).attr('d', <any>line)
+                        .attr('transform', 'translate(' + yAxisWidth + ', 20)')
                         .style('stroke', this.settings.chart.color);
                 }
 
@@ -257,6 +269,7 @@ module powerbi.extensibility.visual {
                         .attr('y1', y(y1))
                         .attr('x2', xt(<Date>x2))
                         .attr('y2', y(y2))
+                        .attr('transform', 'translate(' + yAxisWidth + ', 20)')
                         .style('stroke', this.settings.chart.trendColor);
                 }
 

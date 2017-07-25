@@ -29,15 +29,26 @@ module powerbi.extensibility.visual {
     import DataViewObjectsParser = powerbi.extensibility.utils.dataview.DataViewObjectsParser;
 
     export class VisualSettings extends DataViewObjectsParser {
+        public card: CardSettings = new CardSettings();
         public image: ImageSettings = new ImageSettings();
+        public metric: MetricSettings = new MetricSettings();
         public measure: MeasureSettings = new MeasureSettings();
         public chart: ChartSettings = new ChartSettings();
         public change: ChangeSettings = new ChangeSettings();
     }
 
+    export class CardSettings {
+        public padding: number = 5;
+    }
+
     export class ImageSettings {
         public url: string = null;
         public scale: number = 100;
+    }
+
+    export class MetricSettings {
+        public fontSize: number = 12;
+        public fontColor: string = 'black';
     }
 
     export class MeasureSettings {
