@@ -65,11 +65,24 @@ module powerbi.extensibility.visual {
         return [slope, intercept, rSquare];
     }
 
-    function showDataTooltip (x, y, width, height, tooltip: Selection<HTMLElement>, metric: string, format: string, d: any) {
+    function updateDataTooltip (tooltip: Selection<HTMLElement>, params) {
+        let {x, y, width, height} = params;
         tooltip
-            .style('display', 'block')
             .style('left', x + 'px')
             .style('top', y + 'px')
+        let el = <HTMLElement>tooltip.node();
+        let rect = el.getBoundingClientRect();
+        if (rect.right > width) {
+            tooltip.style('left', (x - 50) + 'px');
+        } else {
+            tooltip.style('left', (x + 50) + 'px');
+        }
+    }
+
+    function showDataTooltip (tooltip: Selection<HTMLElement>, params) {
+        let {metric, format, d} = params;
+        tooltip
+            .style('display', 'block')
             .html(null);
         tooltip.append('div')
             .attr('class', 'label')
@@ -83,13 +96,6 @@ module powerbi.extensibility.visual {
         tooltip.append('div')
             .attr('class', 'value')
             .text(formatMeasure(format)(d.value));
-        let el = <HTMLElement>tooltip.node();
-        let rect = el.getBoundingClientRect();
-        if (rect.right > width) {
-            tooltip.style('left', (x - 50) + 'px');
-        } else {
-            tooltip.style('left', (x + 50) + 'px');
-        }
     }
 
     export class Visual implements IVisual {
@@ -183,9 +189,9 @@ module powerbi.extensibility.visual {
                 // Metric
 
                 let metricValues = getData(dataView.categorical.values, 'metric');
-                let metricValue = metricValues[metricValues.length - 1];
+                let metric = metricValues[metricValues.length - 1];
                 this.metric
-                    .text(metricValue)
+                    .text(metric)
                     .style('font-size', pixelConverterFromPoint(this.settings.metric.fontSize))
                     .style('color', this.settings.metric.fontColor);
 
@@ -284,13 +290,14 @@ module powerbi.extensibility.visual {
                             .attr('width', xo.rangeBand())
                             .attr('height', function (d: any) { return height - y(d.value); })
                             .on('mouseover', function (d: any) {
+                                showDataTooltip(tooltip, {metric, format, d});
+                            })
+                            .on('mousemove', function (d: any) {
                                 let [x, y] = d3.mouse(this);
                                 y += chartTop;
-                                showDataTooltip(x, y, width,
-                                    options.viewport.height, tooltip,
-                                    metricValue, format, d);
+                                updateDataTooltip(tooltip, {x, y, width, height: options.viewport.height});
                             })
-                            .on('mouseout', () => this.tooltip.style('display', 'none'));
+                            .on('mouseout', () => tooltip.style('display', 'none'));
                 } else {
                     let line = d3.svg.line()
                         .x(function (d: any) { return xt(d.date); })
