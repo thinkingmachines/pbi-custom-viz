@@ -20,12 +20,16 @@
 }
 
 .image {
-    position: absolute;
-    top: 0;
-    left: 0;
     height: 80px;
     width: 100%;
     overflow: hidden;
+    position: relative;
+}
+
+.image img {
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
 .metric {
@@ -87,4 +91,20 @@
         stroke-width: 3;
         stroke-dasharray: 3, 3;
     }
+}
+
+.tooltip {
+    font-size: 12px;
+    position: absolute;
+    background: #333;
+    white-space: nowrap;
+    padding: 5px;
+}
+
+.tooltip .label {
+    color: #b4b4b4;
+}
+
+.tooltip .value {
+    color: white;
 }

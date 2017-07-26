@@ -43,7 +43,7 @@ module powerbi.extensibility.visual {
     function formatMeasure (format) {
         return function (d) {
             if (format === 'unit') {
-                return compactInteger(d).toLowerCase();
+                return compactInteger(d, 2).toLowerCase();
             } else {
                 return formatNumber(d * 100, 2) + '%';
             }
@@ -65,6 +65,33 @@ module powerbi.extensibility.visual {
         return [slope, intercept, rSquare];
     }
 
+    function showDataTooltip (x, y, width, height, tooltip: Selection<HTMLElement>, metric: string, format: string, d: any) {
+        tooltip
+            .style('display', 'block')
+            .style('left', x + 'px')
+            .style('top', y + 'px')
+            .html(null);
+        tooltip.append('div')
+            .attr('class', 'label')
+            .text('Period');
+        tooltip.append('div')
+            .attr('class', 'value')
+            .text(d.date.toLocaleDateString());
+        tooltip.append('div')
+            .attr('class', 'label')
+            .text(metric);
+        tooltip.append('div')
+            .attr('class', 'value')
+            .text(formatMeasure(format)(d.value));
+        let el = <HTMLElement>tooltip.node();
+        let rect = el.getBoundingClientRect();
+        if (rect.right > width) {
+            tooltip.style('left', (x - 50) + 'px');
+        } else {
+            tooltip.style('left', (x + 50) + 'px');
+        }
+    }
+
     export class Visual implements IVisual {
         private target: Selection<HTMLElement>;
         private host: IVisualHost;
@@ -83,8 +110,9 @@ module powerbi.extensibility.visual {
         private bars: Selection<HTMLElement>;
         private line: Selection<HTMLElement>;
         private trendLine: Selection<HTMLElement>;
+        private tooltip: Selection<HTMLElement>;
 
-        constructor(options: VisualConstructorOptions) {
+        constructor (options: VisualConstructorOptions) {
             this.target = d3.select(options.element).append('div')
                 .attr('class', 'card');
 
@@ -116,10 +144,13 @@ module powerbi.extensibility.visual {
             this.trendLine = this.chart.append('line')
                 .attr('class', 'trendline');
 
+            this.tooltip = this.target.append('div')
+                .attr('class', 'tooltip');
+
             this.host = options.host;
         }
 
-        public update(options: VisualUpdateOptions) {
+        public update (options: VisualUpdateOptions) {
             try {
                 let dataView = options && options.dataViews && options.dataViews[0];
                 this.settings = Visual.parseSettings(dataView);
@@ -128,13 +159,12 @@ module powerbi.extensibility.visual {
 
                 this.image.html(null);
                 if (this.settings.image.url) {
-                    this.target.style('padding-top', '80px');
                     this.image.append('img')
                         .attr('src', this.settings.image.url)
                         .style('transform-origin', 'top left')
                         .style('transform', 'scale(' + (this.settings.image.scale / 100) + ')')
                 } else {
-                    this.target.style('padding-top', null);
+                    this.header.style('margin-top', null);
                 }
                 this.metric.html(null);
                 this.bars.html(null)
@@ -153,10 +183,11 @@ module powerbi.extensibility.visual {
                 // Metric
 
                 let metricValues = getData(dataView.categorical.values, 'metric');
+                let metricValue = metricValues[metricValues.length - 1];
                 this.metric
-                    .text(metricValues[metricValues.length - 1])
+                    .text(metricValue)
                     .style('font-size', pixelConverterFromPoint(this.settings.metric.fontSize))
-                    .style('color', this.settings.metric.fontColor)
+                    .style('color', this.settings.metric.fontColor);
 
                 // Measure
 
@@ -189,15 +220,18 @@ module powerbi.extensibility.visual {
 
                 // Chart
 
-                let chartTop = 40;
-                if (this.settings.image.url && this.settings.image.url.length > 0) {
-                    chartTop += 80;
-                }
-                let yAxisWidth = 40;
+                let imageHeight = 80;
+                let metricHeight = 20;
                 let headerHeight = 40;
                 let padding = this.settings.card.padding * 2;
+                let xAxisHeight = 40;
+                let yAxisWidth = 40;
+                let chartTop = metricHeight + headerHeight;
+                if (this.settings.image.url && this.settings.image.url.length > 0) {
+                    chartTop += imageHeight;
+                }
                 let width = options.viewport.width - yAxisWidth - padding;
-                let height = options.viewport.height - chartTop - headerHeight - 20 - padding;
+                let height = options.viewport.height - xAxisHeight - chartTop - padding;
                 this.svg.attr('width', width + yAxisWidth);
                 this.svg.attr('height', height + headerHeight);
 
@@ -239,6 +273,7 @@ module powerbi.extensibility.visual {
                     .call(yAxis);
 
                 if (this.settings.chart.type === 'bar') {
+                    let tooltip = this.tooltip
                     this.bars
                         .attr('transform', 'translate(' + yAxisWidth + ', 20)')
                         .selectAll('.bar').data(data).enter()
@@ -247,7 +282,15 @@ module powerbi.extensibility.visual {
                             .attr('x', function (d: any) { return xo(d.date); })
                             .attr('y', function (d: any) { return y(d.value); })
                             .attr('width', xo.rangeBand())
-                            .attr('height', function (d: any) { return height - y(d.value); });
+                            .attr('height', function (d: any) { return height - y(d.value); })
+                            .on('mouseover', function (d: any) {
+                                let [x, y] = d3.mouse(this);
+                                y += chartTop;
+                                showDataTooltip(x, y, width,
+                                    options.viewport.height, tooltip,
+                                    metricValue, format, d);
+                            })
+                            .on('mouseout', () => this.tooltip.style('display', 'none'));
                 } else {
                     let line = d3.svg.line()
                         .x(function (d: any) { return xt(d.date); })
@@ -288,7 +331,7 @@ module powerbi.extensibility.visual {
          * objects and properties you want to expose to the users in the property pane.
          *
          */
-        public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstance[] | VisualObjectInstanceEnumerationObject {
+        public enumerateObjectInstances (options: EnumerateVisualObjectInstancesOptions): VisualObjectInstance[] | VisualObjectInstanceEnumerationObject {
             return VisualSettings.enumerateObjectInstances(this.settings || VisualSettings.getDefault(), options);
         }
     }
