@@ -235,6 +235,9 @@ module powerbi.extensibility.visual {
                 let chartTop = metricHeight + headerHeight;
                 if (this.settings.image.url && this.settings.image.url.length > 0) {
                     chartTop += imageHeight;
+                    this.image.style('display', 'block');
+                } else {
+                    this.image.style('display', 'none');
                 }
                 let width = options.viewport.width - yAxisWidth - padding;
                 let height = options.viewport.height - xAxisHeight - chartTop - padding;
