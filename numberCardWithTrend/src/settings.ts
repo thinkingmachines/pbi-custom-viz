@@ -47,7 +47,7 @@ module powerbi.extensibility.visual {
     }
 
     export class MetricSettings {
-        public fontSize: number = 12;
+        public fontSize: number = 10;
         public fontColor: string = 'black';
     }
 
