@@ -151,7 +151,8 @@ module powerbi.extensibility.visual {
                 .attr('class', 'trendline');
 
             this.tooltip = this.target.append('div')
-                .attr('class', 'tooltip');
+                .attr('class', 'tooltip')
+                .style('display', 'none');
 
             this.host = options.host;
             this.selectionManager = options.host.createSelectionManager();
