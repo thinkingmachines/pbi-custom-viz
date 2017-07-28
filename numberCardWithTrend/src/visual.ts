@@ -31,13 +31,10 @@ module powerbi.extensibility.visual {
 
     import pixelConverterFromPoint = powerbi.extensibility.utils.type.PixelConverter.fromPoint;
 
-    function getData (values, role): any[] {
-        return values.reduce(function (data, _values, value) {
-            if (_values.source.roles[role]) {
-                return _values.values;
-            }
-            return data;
-        }, []);
+    function getValues (values, role) {
+        return values.find(function (dataValue) {
+            return dataValue.source.roles[role];
+        });
     }
 
     function formatMeasure (format) {
@@ -99,9 +96,9 @@ module powerbi.extensibility.visual {
     }
 
     export class Visual implements IVisual {
-        private target: Selection<HTMLElement>;
-        private host: IVisualHost;
         private settings: VisualSettings;
+
+        private target: Selection<HTMLElement>;
         private image: Selection<HTMLElement>;
         private header: Selection<HTMLElement>;
         private metric: Selection<HTMLElement>;
@@ -113,10 +110,13 @@ module powerbi.extensibility.visual {
         private chart: Selection<HTMLElement>;
         private xAxis: Selection<HTMLElement>;
         private yAxis: Selection<HTMLElement>;
-        private bars: Selection<HTMLElement>;
+        private barsContainer: Selection<HTMLElement>;
         private line: Selection<HTMLElement>;
         private trendLine: Selection<HTMLElement>;
         private tooltip: Selection<HTMLElement>;
+
+        private host: IVisualHost;
+        private selectionManager: ISelectionManager;
 
         constructor (options: VisualConstructorOptions) {
             this.target = d3.select(options.element).append('div')
@@ -145,7 +145,7 @@ module powerbi.extensibility.visual {
                 .attr('class', 'x axis');
             this.yAxis = this.chart.append('g')
                 .attr('class', 'y axis');
-            this.bars = this.chart.append('g');
+            this.barsContainer = this.chart.append('g');
             this.line = this.chart.append('path');
             this.trendLine = this.chart.append('line')
                 .attr('class', 'trendline');
@@ -154,12 +154,14 @@ module powerbi.extensibility.visual {
                 .attr('class', 'tooltip');
 
             this.host = options.host;
+            this.selectionManager = options.host.createSelectionManager();
         }
 
         public update (options: VisualUpdateOptions) {
             try {
                 let dataView = options && options.dataViews && options.dataViews[0];
                 this.settings = Visual.parseSettings(dataView);
+                let selectionManager  = this.selectionManager;
 
                 // Reset
 
@@ -173,7 +175,7 @@ module powerbi.extensibility.visual {
                     this.header.style('margin-top', null);
                 }
                 this.metric.html(null);
-                this.bars.html(null)
+                this.barsContainer.html(null);
 
                 this.line.attr('d', null);
                 this.trendLine
@@ -188,7 +190,7 @@ module powerbi.extensibility.visual {
 
                 // Metric
 
-                let metricValues = getData(dataView.categorical.values, 'metric');
+                let metricValues = getValues(dataView.categorical.values, 'metric').values;
                 let metric = metricValues[metricValues.length - 1];
                 this.metric
                     .text(metric)
@@ -197,19 +199,30 @@ module powerbi.extensibility.visual {
 
                 // Measure
 
-                let measureValues = getData(dataView.categorical.values, 'measure');
+                let measure = null;
+                let measureValues = getValues(dataView.categorical.values, 'measure');
+                if (measureValues.highlights) {
+                    measure = measureValues.highlights.find((v) => v);
+                } else {
+                    measure = measureValues.values[measureValues.values.length - 1];
+                }
                 this.measure
                     .style('font-size', pixelConverterFromPoint(this.settings.measure.fontSize))
-                    .text(measureValues[measureValues.length - 1]);
+                    .text(measure);
 
                 // Change
 
-                let changeValues = getData(dataView.categorical.values, 'changeValue');
-                let changeValue = changeValues[changeValues.length - 1];
+                let changeValue = null;
+                let changeValues = getValues(dataView.categorical.values, 'changeValue');
+                if (changeValues.highlights) {
+                    changeValue = changeValues.highlights.find((v) => v);
+                } else {
+                    changeValue = changeValues.values[changeValues.values.length - 1];
+                }
                 this.changeValue
                     .style('font-size', pixelConverterFromPoint(this.settings.change.fontSize))
                     .text(formatNumber(changeValue * 100, 2) + '%');
-                let stateValues = getData(dataView.categorical.values, 'stateValue');
+                let stateValues = getValues(dataView.categorical.values, 'stateValue').values;
                 let stateValue = stateValues[stateValues.length - 1];
                 let changeColor;
                 if (stateValue <= this.settings.change.limit1) {
@@ -256,12 +269,19 @@ module powerbi.extensibility.visual {
 
                 // Data
 
-                let dates = dataView.categorical.categories[0].values;
-                let values = getData(dataView.categorical.values, 'chartMeasure');
-                let data = dates.map(function (d, i) {
+                let category = dataView.categorical.categories[0];
+                let dates = category.values;
+                let chartMeasureValues = getValues(dataView.categorical.values, 'chartMeasure');
+                let highlights = chartMeasureValues.highlights || false;
+                let values = chartMeasureValues.values;
+                let data = dates.map((d, i) => {
                     return {
                         date: d,
-                        value: values[i]
+                        value: values[i],
+                        selectionId: this.host.createSelectionIdBuilder()
+                            .withCategory(category, i)
+                            .createSelectionId(),
+                        highlighted: highlights ? Boolean(highlights[i]) : true
                     };
                 });
 
@@ -282,25 +302,51 @@ module powerbi.extensibility.visual {
                     .call(yAxis);
 
                 if (this.settings.chart.type === 'bar') {
-                    let tooltip = this.tooltip
-                    this.bars
+                    let bars = this.barsContainer
                         .attr('transform', 'translate(' + yAxisWidth + ', 20)')
                         .selectAll('.bar').data(data).enter()
                         .append('rect')
-                            .style('fill', this.settings.chart.color)
-                            .attr('x', function (d: any) { return xo(d.date); })
-                            .attr('y', function (d: any) { return y(d.value); })
-                            .attr('width', xo.rangeBand())
-                            .attr('height', function (d: any) { return height - y(d.value); })
-                            .on('mouseover', function (d: any) {
-                                showDataTooltip(tooltip, {metric, format, d});
-                            })
-                            .on('mousemove', function (d: any) {
-                                let [x, y] = d3.mouse(this);
-                                y += chartTop;
-                                updateDataTooltip(tooltip, {x, y, width, height: options.viewport.height});
-                            })
-                            .on('mouseout', () => tooltip.style('display', 'none'));
+                        .attr('x', function (d: any) { return xo(d.date); })
+                        .attr('y', function (d: any) { return y(d.value); })
+                        .attr('width', xo.rangeBand())
+                        .attr('height', function (d: any) { return height - y(d.value); })
+                        .style('fill', this.settings.chart.color)
+                        .style('opacity', function (d: any) {
+                            return d.highlighted ? 1 : 0.5;
+                        });
+                    let tooltip = this.tooltip;
+                    bars
+                        .on('mouseover', function (d: any) {
+                            showDataTooltip(tooltip, {metric, format, d});
+                        })
+                        .on('mousemove', function (d: any) {
+                            let [x, y] = d3.mouse(this);
+                            y += chartTop;
+                            updateDataTooltip(tooltip, {x, y, width, height: options.viewport.height});
+                        })
+                        .on('mouseout', () => tooltip.style('display', 'none'));
+                    bars
+                        .on('click', (d: any, i) => {
+                            let e = (<Event>d3.event);
+                            let selectedBar = d3.select(e.target);
+                            this.selectionManager.select(d.selectionId).then((ids) => {
+                                let hasSelection = ids.length > 0;
+                                bars.style('opacity', hasSelection ? 0.5 : 1);
+                                let measure = null;
+                                let changeValue = null;
+                                if (hasSelection) {
+                                    selectedBar.style('opacity', 1);
+                                    measure = measureValues.values[i];
+                                    changeValue = changeValues.values[i];
+                                } else {
+                                    measure = measureValues.values[measureValues.values.length - 1];
+                                    changeValue = changeValues.values[measureValues.values.length - 1];
+                                }
+                                this.measure.text(measure);
+                                this.changeValue.text(formatNumber(changeValue * 100, 2) + '%');
+                            });
+                            e.stopPropagation();
+                        });
                 } else {
                     let line = d3.svg.line()
                         .x(function (d: any) { return xt(d.date); })
@@ -310,7 +356,7 @@ module powerbi.extensibility.visual {
                         .style('stroke', this.settings.chart.color);
                 }
 
-                if (this.settings.chart.showTrend) {
+                if (this.settings.chart.showTrend && dates.length > 1) {
                     let trendX = d3.range(1, dates.length + 1);
                     let [slope, intercept, rSquare] = leastSquares(trendX, values);
                     let x1 = dates[0];
