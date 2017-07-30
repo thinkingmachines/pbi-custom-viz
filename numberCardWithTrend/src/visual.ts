@@ -158,11 +158,42 @@ module powerbi.extensibility.visual {
             this.selectionManager = options.host.createSelectionManager();
         }
 
+        private updateChange (changeValues, stateValues, i?) {
+            let changeValue = null;
+            if (i) {
+                changeValue = changeValues.values[i];
+            } else if (changeValues.highlights) {
+                changeValue = changeValues.highlights.find((v) => v);
+            } else {
+                changeValue = changeValues.values[changeValues.values.length - 1];
+            }
+            this.changeValue
+                .style('font-size', pixelConverterFromPoint(this.settings.change.fontSize))
+                .text(formatNumber(changeValue * 100, 2) + '%');
+            let stateValue = null;
+            if (i) {
+                stateValue = stateValues.values[i];
+            } else if (stateValues.highlights) {
+                stateValue = stateValues.highlights.find((v) => v);
+            } else {
+                stateValue = stateValues.values[stateValues.length - 1];
+            }
+            let changeColor;
+            if (stateValue <= this.settings.change.limit1) {
+                changeColor = this.settings.change.color1;
+            } else if (stateValue <= this.settings.change.limit2) {
+                changeColor = this.settings.change.color2;
+            } else {
+                changeColor = this.settings.change.color3;
+            }
+            this.changeValue
+                .style('color', changeColor);
+        }
+
         public update (options: VisualUpdateOptions) {
             try {
                 let dataView = options && options.dataViews && options.dataViews[0];
                 this.settings = Visual.parseSettings(dataView);
-                let selectionManager  = this.selectionManager;
 
                 // Reset
 
@@ -213,29 +244,9 @@ module powerbi.extensibility.visual {
 
                 // Change
 
-                let changeValue = null;
                 let changeValues = getValues(dataView.categorical.values, 'changeValue');
-                if (changeValues.highlights) {
-                    changeValue = changeValues.highlights.find((v) => v);
-                } else {
-                    changeValue = changeValues.values[changeValues.values.length - 1];
-                }
-                this.changeValue
-                    .style('font-size', pixelConverterFromPoint(this.settings.change.fontSize))
-                    .text(formatNumber(changeValue * 100, 2) + '%');
-                let stateValues = getValues(dataView.categorical.values, 'stateValue').values;
-                let stateValue = stateValues[stateValues.length - 1];
-                let changeColor;
-                if (stateValue <= this.settings.change.limit1) {
-                    changeColor = this.settings.change.color1;
-                } else if (stateValue <= this.settings.change.limit2) {
-                    changeColor = this.settings.change.color2;
-                } else {
-                    changeColor = this.settings.change.color3;
-                }
-                this.changeValue
-                    .style('color', changeColor);
-
+                let stateValues = getValues(dataView.categorical.values, 'stateValue');
+                this.updateChange(changeValues, stateValues);
                 this.changeLabel.text(this.settings.change.text);
 
                 // Chart
@@ -334,17 +345,14 @@ module powerbi.extensibility.visual {
                                 let hasSelection = ids.length > 0;
                                 bars.style('opacity', hasSelection ? 0.5 : 1);
                                 let measure = null;
-                                let changeValue = null;
                                 if (hasSelection) {
                                     selectedBar.style('opacity', 1);
                                     measure = measureValues.values[i];
-                                    changeValue = changeValues.values[i];
                                 } else {
                                     measure = measureValues.values[measureValues.values.length - 1];
-                                    changeValue = changeValues.values[measureValues.values.length - 1];
                                 }
                                 this.measure.text(measure);
-                                this.changeValue.text(formatNumber(changeValue * 100, 2) + '%');
+                                this.updateChange(changeValues, stateValues, hasSelection ? i : undefined);
                             });
                             e.stopPropagation();
                         });
