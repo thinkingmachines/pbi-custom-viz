@@ -37,12 +37,12 @@ module powerbi.extensibility.visual {
         });
     }
 
-    function formatMeasure (format) {
+    function formatMeasure (format, decimals = 2) {
         return function (d) {
             if (format === 'unit') {
-                return compactInteger(d, 2).toLowerCase();
+                return compactInteger(d, decimals).toLowerCase();
             } else {
-                return formatNumber(d * 100, 2) + '%';
+                return formatNumber(d * 100, decimals) + '%';
             }
         }
     }
@@ -302,7 +302,7 @@ module powerbi.extensibility.visual {
                 y.domain([0, d3.max(data, function (d: any) { return d.value; })]);
 
                 let format = d3.max(values) > 1 ? 'unit' : 'percentage';
-                yAxis.tickFormat(formatMeasure(format));
+                yAxis.tickFormat(formatMeasure(format, 1));
 
                 // Render
 
