@@ -155,7 +155,7 @@ module powerbi.extensibility.visual {
             } else if (stateValues.highlights) {
                 stateValue = stateValues.highlights.find((v) => v);
             } else {
-                stateValue = stateValues.values[stateValues.length - 1];
+                stateValue = stateValues.values[stateValues.values.length - 1];
             }
             let changeColor;
             if (stateValue <= this.settings.change.limit1) {
