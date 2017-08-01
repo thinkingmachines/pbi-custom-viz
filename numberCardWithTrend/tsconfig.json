@@ -17,6 +17,7 @@
     "node_modules/powerbi-visuals-utils-formattingutils/lib/index.d.ts",
     "src/humanize.ts",
     "src/settings.ts",
+    "src/tooltipServiceWrapper.ts",
     "src/visual.ts"
   ]
 }

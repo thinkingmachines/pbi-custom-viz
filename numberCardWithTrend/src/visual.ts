@@ -62,37 +62,17 @@ module powerbi.extensibility.visual {
         return [slope, intercept, rSquare];
     }
 
-    function updateDataTooltip (tooltip: Selection<HTMLElement>, params) {
-        let {x, y, width, height} = params;
-        tooltip
-            .style('left', x + 'px')
-            .style('top', y + 'px')
-        let el = <HTMLElement>tooltip.node();
-        let rect = el.getBoundingClientRect();
-        if (rect.right > width) {
-            tooltip.style('left', (x - 50) + 'px');
-        } else {
-            tooltip.style('left', (x + 50) + 'px');
-        }
-    }
-
-    function showDataTooltip (tooltip: Selection<HTMLElement>, params) {
-        let {metric, format, d} = params;
-        tooltip
-            .style('display', 'block')
-            .html(null);
-        tooltip.append('div')
-            .attr('class', 'label')
-            .text('Period');
-        tooltip.append('div')
-            .attr('class', 'value')
-            .text(d.date.toLocaleDateString());
-        tooltip.append('div')
-            .attr('class', 'label')
-            .text(metric);
-        tooltip.append('div')
-            .attr('class', 'value')
-            .text(formatMeasure(format)(d.value));
+    function getTooltipData (metric: string, format: string, d: any): VisualTooltipDataItem[] {
+        return [
+            {
+                displayName: 'Period',
+                value: d.date.toLocaleDateString()
+            },
+            {
+                displayName: metric,
+                value: formatMeasure(format)(d.value)
+            }
+        ]
     }
 
     export class Visual implements IVisual {
@@ -113,10 +93,11 @@ module powerbi.extensibility.visual {
         private barsContainer: Selection<HTMLElement>;
         private line: Selection<HTMLElement>;
         private trendLine: Selection<HTMLElement>;
-        private tooltip: Selection<HTMLElement>;
 
         private host: IVisualHost;
         private selectionManager: ISelectionManager;
+
+        private tooltipServiceWrapper: ITooltipServiceWrapper;
 
         constructor (options: VisualConstructorOptions) {
             this.target = d3.select(options.element).append('div')
@@ -150,12 +131,10 @@ module powerbi.extensibility.visual {
             this.trendLine = this.chart.append('line')
                 .attr('class', 'trendline');
 
-            this.tooltip = this.target.append('div')
-                .attr('class', 'tooltip')
-                .style('display', 'none');
-
             this.host = options.host;
             this.selectionManager = options.host.createSelectionManager();
+
+            this.tooltipServiceWrapper = createTooltipServiceWrapper(this.host.tooltipService, options.element);;
         }
 
         private updateChange (changeValues, stateValues, i?) {
@@ -314,6 +293,7 @@ module powerbi.extensibility.visual {
                     .call(yAxis);
 
                 if (this.settings.chart.type === 'bar') {
+
                     let bars = this.barsContainer
                         .attr('transform', 'translate(' + yAxisWidth + ', 20)')
                         .selectAll('.bar').data(data).enter()
@@ -322,21 +302,14 @@ module powerbi.extensibility.visual {
                         .attr('y', function (d: any) { return y(d.value); })
                         .attr('width', xo.rangeBand())
                         .attr('height', function (d: any) { return height - y(d.value); })
+                        .attr('class', 'bar')
                         .style('fill', this.settings.chart.color)
                         .style('opacity', function (d: any) {
                             return d.highlighted ? 1 : 0.5;
                         });
-                    let tooltip = this.tooltip;
-                    bars
-                        .on('mouseover', function (d: any) {
-                            showDataTooltip(tooltip, {metric, format, d});
-                        })
-                        .on('mousemove', function (d: any) {
-                            let [x, y] = d3.mouse(this);
-                            y += chartTop;
-                            updateDataTooltip(tooltip, {x, y, width, height: options.viewport.height});
-                        })
-                        .on('mouseout', () => tooltip.style('display', 'none'));
+                    this.tooltipServiceWrapper.addTooltip(this.barsContainer.selectAll('.bar'),
+                        (tooltipEvent: TooltipEventArgs<number>) => getTooltipData(metric, format, tooltipEvent.data),
+                        (tooltipEvent: TooltipEventArgs<number>) => null);
                     bars
                         .on('click', (d: any, i) => {
                             let e = (<Event>d3.event);
