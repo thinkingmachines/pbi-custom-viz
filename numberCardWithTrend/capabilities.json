@@ -87,6 +87,16 @@
                 }
             }
         },
+        "date": {
+            "displayName": "Date",
+            "properties": {
+                "show": {
+                    "type": {
+                        "bool": true
+                    }
+                }
+            }
+        },
         "metric": {
             "displayName": "Metric",
             "properties": {

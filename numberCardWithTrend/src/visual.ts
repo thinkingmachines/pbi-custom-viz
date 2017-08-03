@@ -80,8 +80,9 @@ module powerbi.extensibility.visual {
 
         private target: Selection<HTMLElement>;
         private image: Selection<HTMLElement>;
-        private header: Selection<HTMLElement>;
+        private date: Selection<HTMLElement>;
         private metric: Selection<HTMLElement>;
+        private header: Selection<HTMLElement>;
         private measure: Selection<HTMLElement>;
         private change: Selection<HTMLElement>;
         private changeValue: Selection<HTMLElement>;
@@ -105,6 +106,9 @@ module powerbi.extensibility.visual {
 
             this.image = this.target.append('div')
                 .attr('class', 'image');
+
+            this.date = this.target.append('div')
+                .attr('class', 'date');
 
             this.metric = this.target.append('div')
                 .attr('class', 'metric');
@@ -177,14 +181,7 @@ module powerbi.extensibility.visual {
                 // Reset
 
                 this.image.html(null);
-                if (this.settings.image.url) {
-                    this.image.append('img')
-                        .attr('src', this.settings.image.url)
-                        .style('transform-origin', 'top left')
-                        .style('transform', 'scale(' + (this.settings.image.scale / 100) + ')')
-                } else {
-                    this.header.style('margin-top', null);
-                }
+                this.date.html(null);
                 this.metric.html(null);
                 this.barsContainer.html(null);
 
@@ -195,9 +192,38 @@ module powerbi.extensibility.visual {
                     .attr('x2', null)
                     .attr('y2', null);
 
+                // Data
+
+                let category = dataView.categorical.categories[0];
+                let dates = category.values;
+                let chartMeasureValues = getValues(dataView.categorical.values, 'chartMeasure');
+                let highlights = chartMeasureValues.highlights || false;
+                let values = chartMeasureValues.values;
+                let data = dates.map((d, i) => {
+                    return {
+                        date: d,
+                        value: values[i],
+                        selectionId: this.host.createSelectionIdBuilder()
+                            .withCategory(category, i)
+                            .createSelectionId(),
+                        highlighted: highlights ? Boolean(highlights[i]) : true
+                    };
+                });
+
                 // Card
 
-                this.target.style('padding', this.settings.card.padding + 'px');
+                this.target.style('margin', this.settings.card.padding + 'px');
+
+                // Image
+
+                if (this.settings.image.url) {
+                    this.image.append('img')
+                        .attr('src', this.settings.image.url)
+                        .style('transform-origin', 'top left')
+                        .style('transform', 'scale(' + (this.settings.image.scale / 100) + ')')
+                } else {
+                    this.header.style('margin-top', null);
+                }
 
                 // Metric
 
@@ -221,6 +247,20 @@ module powerbi.extensibility.visual {
                     .style('font-size', pixelConverterFromPoint(this.settings.measure.fontSize))
                     .text(measure);
 
+                // Date
+
+                if (this.settings.date.show) {
+                    this.date.append('div').text('As of');
+                    let date = null;
+                    if (measureValues.highlights) {
+                        // UGH: So hackish!
+                        date = dates[measureValues.highlights.indexOf(measure)];
+                    } else {
+                        date = dates[dates.length - 1];
+                    }
+                    this.date.append('div').text(d3.time.format('%b %Y')(date));
+                }
+
                 // Change
 
                 let changeValues = getValues(dataView.categorical.values, 'changeValue');
@@ -230,7 +270,7 @@ module powerbi.extensibility.visual {
 
                 // Chart
 
-                let imageHeight = 80;
+                let imageHeight = 40;
                 let metricHeight = 20;
                 let headerHeight = 40;
                 let padding = this.settings.card.padding * 2;
@@ -258,23 +298,7 @@ module powerbi.extensibility.visual {
                 let yAxis = d3.svg.axis().scale(y).orient('left').ticks(5)
                     .tickSize(-width);
 
-                // Data
-
-                let category = dataView.categorical.categories[0];
-                let dates = category.values;
-                let chartMeasureValues = getValues(dataView.categorical.values, 'chartMeasure');
-                let highlights = chartMeasureValues.highlights || false;
-                let values = chartMeasureValues.values;
-                let data = dates.map((d, i) => {
-                    return {
-                        date: d,
-                        value: values[i],
-                        selectionId: this.host.createSelectionIdBuilder()
-                            .withCategory(category, i)
-                            .createSelectionId(),
-                        highlighted: highlights ? Boolean(highlights[i]) : true
-                    };
-                });
+                // Render
 
                 xo.domain(data.map(function (d: any) { return d.date; }));
                 xt.domain(d3.extent(data, function (d: any) { return d.date; }));
@@ -282,8 +306,6 @@ module powerbi.extensibility.visual {
 
                 let format = d3.max(values) > 1 ? 'unit' : 'percentage';
                 yAxis.tickFormat(formatMeasure(format, 1));
-
-                // Render
 
                 this.xAxis
                     .attr('transform', 'translate(' + yAxisWidth + ', ' + (height + 20) + ')')
@@ -317,13 +339,17 @@ module powerbi.extensibility.visual {
                             this.selectionManager.select(d.selectionId).then((ids) => {
                                 let hasSelection = ids.length > 0;
                                 bars.style('opacity', hasSelection ? 0.5 : 1);
+                                let date = null;
                                 let measure = null;
                                 if (hasSelection) {
                                     selectedBar.style('opacity', 1);
+                                    date = dates[i];
                                     measure = measureValues.values[i];
                                 } else {
+                                    date = dates[dates.length - 1];
                                     measure = measureValues.values[measureValues.values.length - 1];
                                 }
+                                this.date.select('div:last-child').text(d3.time.format('%b %Y')(date));
                                 this.measure.text(measure);
                                 this.updateChange(changeValues, stateValues, hasSelection ? i : undefined);
                             });

@@ -31,6 +31,7 @@ module powerbi.extensibility.visual {
     export class VisualSettings extends DataViewObjectsParser {
         public card: CardSettings = new CardSettings();
         public image: ImageSettings = new ImageSettings();
+        public date: DateSettings = new DateSettings();
         public metric: MetricSettings = new MetricSettings();
         public measure: MeasureSettings = new MeasureSettings();
         public chart: ChartSettings = new ChartSettings();
@@ -44,6 +45,10 @@ module powerbi.extensibility.visual {
     export class ImageSettings {
         public url: string = null;
         public scale: number = 100;
+    }
+
+    export class DateSettings {
+        public show: boolean = true;
     }
 
     export class MetricSettings {
