@@ -47,16 +47,19 @@ module powerbi.extensibility.visual {
         }
     }
 
-    function getTooltipData (metric: string, format: string, d: any): VisualTooltipDataItem[] {
+    function getTooltipData (left: any, right: any, d: any): VisualTooltipDataItem[] {
         return [
             {
-                displayName: 'Period',
-                value: d.date.toLocaleDateString()
+                header: d.date.toLocaleDateString(),
+                displayName: left.metric,
+                // color: left.color,
+                value: formatMeasure(left.format)(d.leftValue || 0)
             },
             {
-                displayName: metric,
-                value: formatMeasure(format)(d.value)
-            }
+                displayName: right.metric,
+                // color: right.color,
+                value: formatMeasure(right.format)(d.rightValue || 0)
+            },
         ]
     }
 
@@ -69,9 +72,13 @@ module powerbi.extensibility.visual {
         private xAxis: Selection<HTMLElement>;
         private leftYAxis: Selection<HTMLElement>;
         private leftLine: Selection<HTMLElement>;
-        private leftLegend: Selection<HTMLElement>;
+        private leftActive: Selection<HTMLElement>;
         private rightYAxis: Selection<HTMLElement>;
         private rightLine: Selection<HTMLElement>;
+        private rightActive: Selection<HTMLElement>;
+        private hoverLine: Selection<HTMLElement>;
+        private chartArea: Selection<HTMLElement>;
+        private leftLegend: Selection<HTMLElement>;
         private rightLegend: Selection<HTMLElement>;
 
         private host: IVisualHost;
@@ -85,16 +92,33 @@ module powerbi.extensibility.visual {
             this.svg = this.target.append('svg');
             this.chart = this.svg.append('g')
                 .attr('class', 'chart');
+
             this.xAxis = this.chart.append('g')
                 .attr('class', 'x axis');
 
+            this.leftLine = this.chart.append('path')
+                .attr('class', 'line');
             this.leftYAxis = this.chart.append('g')
                 .attr('class', 'y axis');
-            this.leftLine = this.chart.append('path');
 
-            this.rightLine = this.chart.append('path');
+            this.rightLine = this.chart.append('path')
+                .attr('class', 'line');
             this.rightYAxis = this.chart.append('g')
                 .attr('class', 'y axis');
+
+            this.leftActive = this.chart.append('circle')
+                .attr('r', 3)
+                .style('display', 'none');
+            this.rightActive = this.chart.append('circle')
+                .attr('r', 3)
+                .style('display', 'none');
+
+            this.hoverLine = this.chart.append('line')
+                .attr('class', 'hover')
+                .style('display', 'none');
+
+            this.chartArea = this.chart.append('rect')
+                .attr('class', 'area');
 
             this.leftLegend = this.svg.append('g')
                 .attr('class', 'legend');
@@ -103,8 +127,6 @@ module powerbi.extensibility.visual {
 
             this.host = options.host;
             this.selectionManager = options.host.createSelectionManager();
-
-            this.tooltipServiceWrapper = createTooltipServiceWrapper(this.host.tooltipService, options.element);;
         }
 
         public update (options: VisualUpdateOptions) {
@@ -139,9 +161,9 @@ module powerbi.extensibility.visual {
                     };
                 });
 
-                let legendHeight = 20;
-                let xAxisHeight = 40;
-                let yAxisWidth = 40;
+                let legendHeight = 40;
+                let xAxisHeight = 20;
+                let yAxisWidth = 20;
                 let width = options.viewport.width - 2 * yAxisWidth;
                 let height = options.viewport.height - legendHeight - xAxisHeight;
 
@@ -165,6 +187,11 @@ module powerbi.extensibility.visual {
                 this.svg.attr('height', options.viewport.height);
 
                 this.chart.attr('transform', 'translate(0, ' + legendHeight + ')');
+                this.chartArea
+                    .attr('x', yAxisWidth)
+                    .attr('y', legendHeight)
+                    .attr('width', width)
+                    .attr('height', height);
 
                 let xAxis = d3.svg.axis().orient('bottom')
                     .scale(xt)
@@ -182,16 +209,16 @@ module powerbi.extensibility.visual {
                 rightYAxis.tickFormat(formatMeasure(rightFormat, 1));
 
                 this.xAxis
-                    .attr('transform', 'translate(' + yAxisWidth + ', ' + (height + 20) + ')')
+                    .attr('transform', 'translate(' + yAxisWidth + ', ' + (height) + ')')
                     .call(xAxis);
 
                 this.leftYAxis
-                    .attr('transform', 'translate(' + yAxisWidth + ', 20)')
+                    .attr('transform', 'translate(' + yAxisWidth + ', 0)')
                     .call(leftYAxis)
                     .selectAll('.tick text')
                         .attr('fill', this.settings.dataColors.left);
                 this.rightYAxis
-                    .attr('transform', 'translate(' + (width + yAxisWidth) + ', 20)')
+                    .attr('transform', 'translate(' + (width + yAxisWidth) + ', 0)')
                     .call(rightYAxis)
                     .selectAll('.tick text')
                         .attr('fill', this.settings.dataColors.right);
@@ -204,10 +231,10 @@ module powerbi.extensibility.visual {
                     .y(function (d: any) { return yr(d.rightValue); });
 
                 this.leftLine.datum(data).attr('d', <any>leftLine)
-                    .attr('transform', 'translate(' + yAxisWidth + ', 20)')
+                    .attr('transform', 'translate(' + yAxisWidth + ', 0)')
                     .style('stroke', this.settings.dataColors.left);
                 this.rightLine.datum(data).attr('d', <any>rightLine)
-                    .attr('transform', 'translate(' + yAxisWidth + ', 20)')
+                    .attr('transform', 'translate(' + yAxisWidth + ', 0)')
                     .style('stroke', this.settings.dataColors.right);
 
                 let leftLegend = this.leftLegend
@@ -234,6 +261,96 @@ module powerbi.extensibility.visual {
                     .attr('dx', '-10px')
                     .attr('dy', '0.3em')
                     .text(rightMeasure.source.displayName);
+
+                // Interaction
+
+                let bisectDate = d3.bisector(function (d: any) { return d.date; }).left;
+                let leftActive = this.leftActive;
+                let rightActive = this.rightActive;
+                let hoverLine = this.hoverLine;
+                let tooltipService = this.host.tooltipService;
+                let leftColor = this.settings.dataColors.left;
+                let rightColor = this.settings.dataColors.right;
+
+                this.hoverLine
+                    .attr('x1', 0)
+                    .attr('y1', 0)
+                    .attr('x2', 0)
+                    .attr('y2', height);
+
+                this.chartArea
+                    .on('mouseover', function () {
+                        let coordinates = d3.mouse(this);
+                        let x0 = xt.invert(coordinates[0] - yAxisWidth);
+                        let i = bisectDate(data, x0, 0);
+                        let d = data[i];
+                        leftActive
+                            .style('display', 'block')
+                            .attr('fill', leftColor);
+                        rightActive
+                            .style('display', 'block')
+                            .attr('fill', rightColor);
+                        hoverLine
+                            .style('display', 'block');
+                        tooltipService.show({
+                            coordinates: [coordinates[0], coordinates[1]],
+                            isTouchEvent: false,
+                            dataItems: getTooltipData(
+                                {
+                                    metric: leftMeasure.source.displayName,
+                                    format: leftFormat,
+                                    color: leftColor
+                                },
+                                {
+                                    metric: rightMeasure.source.displayName,
+                                    format: rightFormat,
+                                    color: rightColor
+                                },
+                                d),
+                            identities: []
+                        });
+                    })
+                    .on('mouseout', function () {
+                        leftActive.style('display', 'none');
+                        rightActive.style('display', 'none');
+                        hoverLine.style('display', 'none');
+                        tooltipService.hide({
+                            isTouchEvent: false,
+                            immediately: false
+                        });
+                    })
+                    .on('mousemove', function () {
+                        let coordinates = d3.mouse(this);
+                        let x0 = xt.invert(coordinates[0] - yAxisWidth);
+                        let i = bisectDate(data, x0, 0);
+                        let d = data[i];
+                        leftActive
+                            .attr('cx', xt(<any>d.date) + yAxisWidth)
+                            .attr('cy', yl(<any>d.leftValue + legendHeight));
+                        rightActive
+                            .attr('cx', xt(<any>d.date) + yAxisWidth)
+                            .attr('cy', yr(<any>d.rightValue + legendHeight));
+                        hoverLine
+                            .attr('x1', xt(<any>d.date) + yAxisWidth)
+                            .attr('x2', xt(<any>d.date) + yAxisWidth);
+                        tooltipService.move({
+                            coordinates: [coordinates[0], coordinates[1]],
+                            isTouchEvent: false,
+                            dataItems: getTooltipData(
+                                {
+                                    metric: leftMeasure.source.displayName,
+                                    format: leftFormat,
+                                    color: leftColor
+                                },
+                                {
+                                    metric: rightMeasure.source.displayName,
+                                    format: rightFormat,
+                                    color: rightColor
+                                },
+                                d),
+                            identities: []
+                        });
+                    });
 
             } catch (e) {
                 console.error(e);

@@ -11,7 +11,10 @@ text {
 }
 
 .chart {
-    path {
+    .area {
+        fill: transparent;
+    }
+    .line {
         stroke-width: 2;
         fill: none;
     }
@@ -32,6 +35,7 @@ text {
             stroke: #b4b4b4;
             stroke-width: 1;
             opacity: 0.25;
+            fill: none;
         }
         .tick {
             text {
@@ -42,7 +46,12 @@ text {
     .y.axis {
         .domain {
             stroke: none;
+            fill: none;
         }
+    }
+    .hover {
+        stroke: #666;
+        stroke-width: 1;
     }
 }
 
