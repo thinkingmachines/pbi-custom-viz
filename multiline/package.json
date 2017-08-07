@@ -1,0 +1,11 @@
+{
+  "name": "visual",
+  "dependencies": {
+    "@types/d3": "3.5.36",
+    "@types/globalize": "0.0.30",
+    "d3": "3.5.17",
+    "powerbi-visuals-utils-dataviewutils": "1.2.0",
+    "powerbi-visuals-utils-formattingutils": "2.1.0",
+    "powerbi-visuals-utils-typeutils": "1.1.0"
+  }
+}

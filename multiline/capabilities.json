@@ -1,0 +1,113 @@
+{
+    "dataRoles": [
+        {
+            "displayName": "Left Measure",
+            "name": "leftMeasure",
+            "kind": "Measure"
+        },
+        {
+            "displayName": "Right Measure",
+            "name": "rightMeasure",
+            "kind": "Measure"
+        },
+        {
+            "displayName": "Axis",
+            "name": "axis",
+            "kind": "GroupingOrMeasure"
+        }
+    ],
+    "dataViewMappings": [
+        {
+            "conditions": [
+                {
+                    "leftMeasure": { "max": 1 },
+                    "rightMeasure": { "max": 1 }
+                }
+            ],
+            "categorical": {
+                "categories": {
+                    "for": { "in": "axis" }
+                },
+                "values": {
+                    "select": [
+                        { "bind": { "to": "leftMeasure" } },
+                        { "bind": { "to": "rightMeasure" } }
+                    ]
+                }
+            }
+        }
+    ],
+    "objects": {
+        "legend": {
+            "displayName": "Legend",
+            "properties": {
+                "show": {
+                    "displayName": "Show Legend",
+                    "type": {
+                        "bool": true
+                    }
+                }
+            }
+        },
+        "leftYAxis": {
+            "displayName": "Left Y-Axis",
+            "properties": {
+                "min": {
+                    "displayName": "Minimum",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "max": {
+                    "displayName": "Maximum",
+                    "type": {
+                        "numeric": true
+                    }
+                }
+            }
+        },
+        "rightYAxis": {
+            "displayName": "Right Y-Axis",
+            "properties": {
+                "min": {
+                    "displayName": "Minimum",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "max": {
+                    "displayName": "Maximum",
+                    "type": {
+                        "numeric": true
+                    }
+                }
+            }
+        },
+        "dataColors": {
+            "displayName": "Data Colors",
+            "properties": {
+                "left": {
+                    "displayName": "Left",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "right": {
+                    "displayName": "Right",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "supportsHighlight": true
+}
