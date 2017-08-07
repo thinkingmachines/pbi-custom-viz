@@ -42,7 +42,7 @@ module powerbi.extensibility.visual {
             if (format === 'unit') {
                 return compactInteger(d, decimals).toLowerCase();
             } else {
-                return formatNumber(d * 100, decimals) + '%';
+                return formatNumber(d * 100) + '%';
             }
         }
     }
@@ -106,15 +106,14 @@ module powerbi.extensibility.visual {
             this.rightYAxis = this.chart.append('g')
                 .attr('class', 'y axis');
 
+            this.hoverLine = this.chart.append('line')
+                .attr('class', 'hover')
+                .style('display', 'none');
             this.leftActive = this.chart.append('circle')
                 .attr('r', 3)
                 .style('display', 'none');
             this.rightActive = this.chart.append('circle')
                 .attr('r', 3)
-                .style('display', 'none');
-
-            this.hoverLine = this.chart.append('line')
-                .attr('class', 'hover')
                 .style('display', 'none');
 
             this.chartArea = this.chart.append('rect')
@@ -163,7 +162,7 @@ module powerbi.extensibility.visual {
 
                 let legendHeight = 40;
                 let xAxisHeight = 20;
-                let yAxisWidth = 20;
+                let yAxisWidth = 30;
                 let width = options.viewport.width - 2 * yAxisWidth;
                 let height = options.viewport.height - legendHeight - xAxisHeight;
 
@@ -209,18 +208,20 @@ module powerbi.extensibility.visual {
                 rightYAxis.tickFormat(formatMeasure(rightFormat, 1));
 
                 this.xAxis
-                    .attr('transform', 'translate(' + yAxisWidth + ', ' + (height) + ')')
+                    .attr('transform', 'translate(' + yAxisWidth + ', ' + height + ')')
                     .call(xAxis);
 
                 this.leftYAxis
                     .attr('transform', 'translate(' + yAxisWidth + ', 0)')
                     .call(leftYAxis)
                     .selectAll('.tick text')
+                        .attr('dx', '-8px')
                         .attr('fill', this.settings.dataColors.left);
                 this.rightYAxis
                     .attr('transform', 'translate(' + (width + yAxisWidth) + ', 0)')
                     .call(rightYAxis)
                     .selectAll('.tick text')
+                        .attr('dx', '8px')
                         .attr('fill', this.settings.dataColors.right);
 
                 let leftLine = d3.svg.line()
@@ -265,9 +266,9 @@ module powerbi.extensibility.visual {
                 // Interaction
 
                 let bisectDate = d3.bisector(function (d: any) { return d.date; }).left;
+                let hoverLine = this.hoverLine;
                 let leftActive = this.leftActive;
                 let rightActive = this.rightActive;
-                let hoverLine = this.hoverLine;
                 let tooltipService = this.host.tooltipService;
                 let leftColor = this.settings.dataColors.left;
                 let rightColor = this.settings.dataColors.right;
@@ -284,14 +285,14 @@ module powerbi.extensibility.visual {
                         let x0 = xt.invert(coordinates[0] - yAxisWidth);
                         let i = bisectDate(data, x0, 0);
                         let d = data[i];
+                        hoverLine
+                            .style('display', 'block');
                         leftActive
                             .style('display', 'block')
                             .attr('fill', leftColor);
                         rightActive
                             .style('display', 'block')
                             .attr('fill', rightColor);
-                        hoverLine
-                            .style('display', 'block');
                         tooltipService.show({
                             coordinates: [coordinates[0], coordinates[1]],
                             isTouchEvent: false,
@@ -311,9 +312,9 @@ module powerbi.extensibility.visual {
                         });
                     })
                     .on('mouseout', function () {
+                        hoverLine.style('display', 'none');
                         leftActive.style('display', 'none');
                         rightActive.style('display', 'none');
-                        hoverLine.style('display', 'none');
                         tooltipService.hide({
                             isTouchEvent: false,
                             immediately: false
@@ -324,15 +325,15 @@ module powerbi.extensibility.visual {
                         let x0 = xt.invert(coordinates[0] - yAxisWidth);
                         let i = bisectDate(data, x0, 0);
                         let d = data[i];
-                        leftActive
-                            .attr('cx', xt(<any>d.date) + yAxisWidth)
-                            .attr('cy', yl(<any>d.leftValue + legendHeight));
-                        rightActive
-                            .attr('cx', xt(<any>d.date) + yAxisWidth)
-                            .attr('cy', yr(<any>d.rightValue + legendHeight));
                         hoverLine
                             .attr('x1', xt(<any>d.date) + yAxisWidth)
                             .attr('x2', xt(<any>d.date) + yAxisWidth);
+                        leftActive
+                            .attr('cx', xt(<any>d.date) + yAxisWidth)
+                            .attr('cy', yl(<any>d.leftValue));
+                        rightActive
+                            .attr('cx', xt(<any>d.date) + yAxisWidth)
+                            .attr('cy', yr(<any>d.rightValue));
                         tooltipService.move({
                             coordinates: [coordinates[0], coordinates[1]],
                             isTouchEvent: false,
