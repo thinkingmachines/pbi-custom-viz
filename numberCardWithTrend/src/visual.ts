@@ -138,7 +138,7 @@ module powerbi.extensibility.visual {
             this.host = options.host;
             this.selectionManager = options.host.createSelectionManager();
 
-            this.tooltipServiceWrapper = createTooltipServiceWrapper(this.host.tooltipService, options.element);;
+            this.tooltipServiceWrapper = createTooltipServiceWrapper(this.host.tooltipService, options.element);
         }
 
         private updateChange (changeValues, stateValues, i?) {
