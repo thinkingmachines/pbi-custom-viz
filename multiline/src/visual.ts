@@ -84,8 +84,6 @@ module powerbi.extensibility.visual {
         private host: IVisualHost;
         private selectionManager: ISelectionManager;
 
-        private tooltipServiceWrapper: ITooltipServiceWrapper;
-
         constructor (options: VisualConstructorOptions) {
             this.target = d3.select(options.element);
 
@@ -192,10 +190,13 @@ module powerbi.extensibility.visual {
                     .attr('width', width)
                     .attr('height', height);
 
+                let days = (<any>data[data.length - 1].date - <any>data[0].date) / 1000 / 60 / 60 / 24;
+                let xAxisFormatString = days > 365 ? '%Y' : '%b %Y';
+                let xAxisTicks = days > 365 ? d3.time.years : d3.time.months;
                 let xAxis = d3.svg.axis().orient('bottom')
                     .scale(xt)
-                    .tickFormat(d3.time.format('%b %Y'))
-                    .ticks(2);
+                    .tickFormat(d3.time.format(xAxisFormatString))
+                    .ticks(xAxisTicks);
 
                 let leftYAxis = d3.svg.axis().scale(yl).orient('left').ticks(5)
                     .tickSize(-width);
