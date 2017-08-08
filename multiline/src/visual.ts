@@ -42,7 +42,7 @@ module powerbi.extensibility.visual {
             if (format === 'unit') {
                 return compactInteger(d, decimals).toLowerCase();
             } else {
-                return formatNumber(d * 100) + '%';
+                return formatNumber(d * 100, decimals) + '%';
             }
         }
     }
@@ -53,12 +53,12 @@ module powerbi.extensibility.visual {
                 header: d.date.toLocaleDateString(),
                 displayName: left.metric,
                 // color: left.color,
-                value: formatMeasure(left.format)(d.leftValue || 0)
+                value: formatMeasure(left.format, 1)(d.leftValue || 0)
             },
             {
                 displayName: right.metric,
                 // color: right.color,
-                value: formatMeasure(right.format)(d.rightValue || 0)
+                value: formatMeasure(right.format, 1)(d.rightValue || 0)
             },
         ]
     }
@@ -204,9 +204,10 @@ module powerbi.extensibility.visual {
                     .tickSize(0);
 
                 let leftFormat = d3.max(leftMeasure.values) > 1 ? 'unit' : 'percentage';
-                leftYAxis.tickFormat(formatMeasure(leftFormat, 1));
+                leftYAxis.tickFormat(formatMeasure(leftFormat, leftFormat === 'unit' ? 1 : 0));
+
                 let rightFormat = d3.max(rightMeasure.values) > 1 ? 'unit' : 'percentage';
-                rightYAxis.tickFormat(formatMeasure(rightFormat, 1));
+                rightYAxis.tickFormat(formatMeasure(rightFormat, rightFormat === 'unit' ? 1 : 0));
 
                 this.xAxis
                     .attr('transform', 'translate(' + yAxisWidth + ', ' + height + ')')
@@ -295,7 +296,7 @@ module powerbi.extensibility.visual {
                             .style('display', 'block')
                             .attr('fill', rightColor);
                         tooltipService.show({
-                            coordinates: [coordinates[0], coordinates[1]],
+                            coordinates: coordinates,
                             isTouchEvent: false,
                             dataItems: getTooltipData(
                                 {
@@ -336,7 +337,7 @@ module powerbi.extensibility.visual {
                             .attr('cx', xt(<any>d.date) + yAxisWidth)
                             .attr('cy', yr(<any>d.rightValue));
                         tooltipService.move({
-                            coordinates: [coordinates[0], coordinates[1]],
+                            coordinates: coordinates,
                             isTouchEvent: false,
                             dataItems: getTooltipData(
                                 {
