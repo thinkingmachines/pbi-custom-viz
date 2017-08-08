@@ -271,7 +271,7 @@ module powerbi.extensibility.visual {
                 // Chart
 
                 let imageHeight = 40;
-                let metricHeight = 20;
+                let metricHeight = 25;
                 let headerHeight = 40;
                 let padding = this.settings.card.padding * 2;
                 let xAxisHeight = 40;
