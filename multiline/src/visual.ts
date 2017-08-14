@@ -53,12 +53,12 @@ module powerbi.extensibility.visual {
                 header: d.date.toLocaleDateString(),
                 displayName: left.metric,
                 // color: left.color,
-                value: formatMeasure(left.format, 1)(d.leftValue || 0)
+                value: formatMeasure(left.format, 2)(d.leftValue || 0)
             },
             {
                 displayName: right.metric,
                 // color: right.color,
-                value: formatMeasure(right.format, 1)(d.rightValue || 0)
+                value: formatMeasure(right.format, 2)(d.rightValue || 0)
             },
         ]
     }
@@ -227,9 +227,11 @@ module powerbi.extensibility.visual {
                         .attr('fill', this.settings.dataColors.right);
 
                 let leftLine = d3.svg.line()
+                    .defined(function (d: any) { return d.leftValue !== null; })
                     .x(function (d: any) { return xt(d.date); })
                     .y(function (d: any) { return yl(d.leftValue); });
                 let rightLine = d3.svg.line()
+                    .defined(function (d: any) { return d.rightValue !== null; })
                     .x(function (d: any) { return xt(d.date); })
                     .y(function (d: any) { return yr(d.rightValue); });
 
