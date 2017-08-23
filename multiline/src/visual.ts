@@ -48,19 +48,24 @@ module powerbi.extensibility.visual {
     }
 
     function getTooltipData (left: any, right: any, d: any): VisualTooltipDataItem[] {
-        return [
-            {
+        let tooltipData = [];
+        if (d.leftValue !== null) {
+            tooltipData.push({
                 header: d.date.toLocaleDateString(),
                 displayName: left.metric,
                 // color: left.color,
                 value: formatMeasure(left.format, 2)(d.leftValue || 0)
-            },
-            {
+            });
+        }
+        if (d.rightValue !== null) {
+            tooltipData.push({
+                header: d.date.toLocaleDateString(),
                 displayName: right.metric,
                 // color: right.color,
                 value: formatMeasure(right.format, 2)(d.rightValue || 0)
-            },
-        ]
+            });
+        }
+        return tooltipData;
     }
 
     export class Visual implements IVisual {
@@ -291,12 +296,16 @@ module powerbi.extensibility.visual {
                         let d = data[i];
                         hoverLine
                             .style('display', 'block');
-                        leftActive
-                            .style('display', 'block')
-                            .attr('fill', leftColor);
-                        rightActive
-                            .style('display', 'block')
-                            .attr('fill', rightColor);
+                        if (d.leftValue !== null) {
+                            leftActive
+                                .style('display', 'block')
+                                .attr('fill', leftColor);
+                        }
+                        if (d.rightValue !== null) {
+                            rightActive
+                                .style('display', 'block')
+                                .attr('fill', rightColor);
+                        }
                         tooltipService.show({
                             coordinates: coordinates,
                             isTouchEvent: false,
