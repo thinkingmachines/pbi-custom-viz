@@ -63,6 +63,12 @@
                     "type": {
                         "numeric": true
                     }
+                },
+                "width": {
+                    "displayName": "Width",
+                    "type": {
+                        "numeric": true
+                    }
                 }
             }
         },
@@ -77,6 +83,12 @@
                 },
                 "max": {
                     "displayName": "Maximum",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "width": {
+                    "displayName": "Width",
                     "type": {
                         "numeric": true
                     }

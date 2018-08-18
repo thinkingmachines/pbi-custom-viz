@@ -42,6 +42,7 @@ module powerbi.extensibility.visual {
     export class YAxisSettings {
         public min: number = 0;
         public max: number = null;
+        public width: number = 30;
     }
 
     export class DataColorsSettings {

@@ -165,8 +165,9 @@ module powerbi.extensibility.visual {
 
                 let legendHeight = 40;
                 let xAxisHeight = 20;
-                let yAxisWidth = 30;
-                let width = options.viewport.width - 2 * yAxisWidth;
+                let lAxisWidth = this.settings.leftYAxis.width;
+                let rAxisWidth = this.settings.rightYAxis.width;
+                let width = options.viewport.width - (lAxisWidth + rAxisWidth);
                 let height = options.viewport.height - legendHeight - xAxisHeight;
 
                 let xo = d3.scale.ordinal().rangeBands([0, width], 0.25);
@@ -190,7 +191,7 @@ module powerbi.extensibility.visual {
 
                 this.chart.attr('transform', 'translate(0, ' + legendHeight + ')');
                 this.chartArea
-                    .attr('x', yAxisWidth)
+                    .attr('x', lAxisWidth)
                     .attr('y', legendHeight)
                     .attr('width', width)
                     .attr('height', height);
@@ -215,17 +216,17 @@ module powerbi.extensibility.visual {
                 rightYAxis.tickFormat(formatMeasure(rightFormat, rightFormat === 'unit' ? 1 : 0));
 
                 this.xAxis
-                    .attr('transform', 'translate(' + yAxisWidth + ', ' + height + ')')
+                    .attr('transform', 'translate(' + lAxisWidth + ', ' + height + ')')
                     .call(xAxis);
 
                 this.leftYAxis
-                    .attr('transform', 'translate(' + yAxisWidth + ', 0)')
+                    .attr('transform', 'translate(' + lAxisWidth + ', 0)')
                     .call(leftYAxis)
                     .selectAll('.tick text')
                         .attr('dx', '-8px')
                         .attr('fill', this.settings.dataColors.left);
                 this.rightYAxis
-                    .attr('transform', 'translate(' + (width + yAxisWidth) + ', 0)')
+                    .attr('transform', 'translate(' + (width + lAxisWidth) + ', 0)')
                     .call(rightYAxis)
                     .selectAll('.tick text')
                         .attr('dx', '8px')
@@ -241,14 +242,14 @@ module powerbi.extensibility.visual {
                     .y(function (d: any) { return yr(d.rightValue); });
 
                 this.leftLine.datum(data).attr('d', <any>leftLine)
-                    .attr('transform', 'translate(' + yAxisWidth + ', 0)')
+                    .attr('transform', 'translate(' + lAxisWidth + ', 0)')
                     .style('stroke', this.settings.dataColors.left);
                 this.rightLine.datum(data).attr('d', <any>rightLine)
-                    .attr('transform', 'translate(' + yAxisWidth + ', 0)')
+                    .attr('transform', 'translate(' + lAxisWidth + ', 0)')
                     .style('stroke', this.settings.dataColors.right);
 
                 let leftLegend = this.leftLegend
-                    .attr('transform', 'translate(' + (yAxisWidth / 2) + ', 10)');
+                    .attr('transform', 'translate(' + (lAxisWidth / 2) + ', 10)');
                 leftLegend.append('circle')
                     .attr('cx', 0)
                     .attr('cy', 0)
@@ -260,7 +261,7 @@ module powerbi.extensibility.visual {
                     .text(leftMeasure.source.displayName);
 
                 let rightLegend = this.rightLegend
-                    .attr('transform', 'translate(' + (yAxisWidth * 1.5 + width) + ', 10)')
+                    .attr('transform', 'translate(' + (lAxisWidth * 1.5 + width) + ', 10)')
                 rightLegend.append('circle')
                     .attr('cx', 0)
                     .attr('cy', 0)
@@ -291,7 +292,7 @@ module powerbi.extensibility.visual {
                 this.chartArea
                     .on('mouseover', function () {
                         let coordinates = d3.mouse(this);
-                        let x0 = xt.invert(coordinates[0] - yAxisWidth);
+                        let x0 = xt.invert(coordinates[0] - lAxisWidth);
                         let i = bisectDate(data, x0, 0);
                         let d = data[i];
                         hoverLine
@@ -335,17 +336,17 @@ module powerbi.extensibility.visual {
                     })
                     .on('mousemove', function () {
                         let coordinates = d3.mouse(this);
-                        let x0 = xt.invert(coordinates[0] - yAxisWidth);
+                        let x0 = xt.invert(coordinates[0] - lAxisWidth);
                         let i = bisectDate(data, x0, 0);
                         let d = data[i];
                         hoverLine
-                            .attr('x1', xt(<any>d.date) + yAxisWidth)
-                            .attr('x2', xt(<any>d.date) + yAxisWidth);
+                            .attr('x1', xt(<any>d.date) + lAxisWidth)
+                            .attr('x2', xt(<any>d.date) + lAxisWidth);
                         leftActive
-                            .attr('cx', xt(<any>d.date) + yAxisWidth)
+                            .attr('cx', xt(<any>d.date) + lAxisWidth)
                             .attr('cy', yl(<any>d.leftValue));
                         rightActive
-                            .attr('cx', xt(<any>d.date) + yAxisWidth)
+                            .attr('cx', xt(<any>d.date) + lAxisWidth)
                             .attr('cy', yr(<any>d.rightValue));
                         tooltipService.move({
                             coordinates: coordinates,
